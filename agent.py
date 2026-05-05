@@ -1,6 +1,15 @@
+import os
+import json
+from dotenv import load_dotenv
+from google import genai
+from google.genai import errors
+
 from retrieval import search_menu
 from tools import filter_menu, get_dish_detail, format_menu_list, format_dish_detail
 
+# Load environment variables
+load_dotenv()
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 # ===============================
 # Tool Registry
@@ -11,77 +20,65 @@ tools = {
     "get_dish_detail": get_dish_detail
 }
 
-
-# ===============================
-# Extract functions
-# ===============================
-def extract_price(user_input):
-    words = user_input.replace("บาท", "").split()
-
-    for word in words:
-        if word.isdigit():
-            return int(word)
-
-    return None
-
-
-def extract_ingredient(user_input):
-    ingredients = ["หมู", "ไก่", "กุ้ง", "ปู", "ปลา", "ไข่"]
-
-    for ing in ingredients:
-        if ing in user_input:
-            return ing
-
-    return None
-
-
-def extract_category(user_input):
-    categories = ["ข้าวผัด", "ผัด", "ต้ม", "ทอด", "แกง"]
-
-    for cat in categories:
-        if cat in user_input:
-            return cat
-
-    return None
-
-
-def extract_dish_name(user_input):
-    remove_words = ["ขอรายละเอียด", "รายละเอียด", "อยากรู้", "เมนู"]
-
-    name = user_input
-    for w in remove_words:
-        name = name.replace(w, "")
-
-    return name.strip()
-
-
 # ===============================
 # Emoji mapping (BONUS 🔥)
 # ===============================
 def get_emoji(ingredient, category):
-    if ingredient == "กุ้ง":
-        return "🦐"
-    elif ingredient == "หมู":
-        return "🐷"
-    elif ingredient == "ไก่":
-        return "🐔"
-    elif ingredient == "ปลา":
-        return "🐟"
-    elif ingredient == "ปู":
-        return "🦀"
-    elif category == "ทอด":
-        return "🍗"
-    elif category == "ต้ม":
-        return "🍲"
-    elif category == "ผัด":
-        return "🥘"
-    elif category == "แกง":
-        return "🍛"
-    elif category == "ข้าวผัด":
-        return "🍚"
-    else:
-        return "🍽️"
+    if ingredient == "กุ้ง": return "🦐"
+    elif ingredient == "หมู": return "🐷"
+    elif ingredient == "ไก่": return "🐔"
+    elif ingredient == "ปลา": return "🐟"
+    elif ingredient == "ปู": return "🦀"
+    elif category == "ทอด": return "🍗"
+    elif category == "ต้ม": return "🍲"
+    elif category == "ผัด": return "🥘"
+    elif category == "แกง": return "🍛"
+    elif category == "ข้าวผัด": return "🍚"
+    else: return "🍽️"
 
+def decide_tool(user_input):
+    prompt = f"""
+คุณคือ AI Agent ผู้ช่วยแนะนำเมนูอาหารไทย
+จงวิเคราะห์คำถามของผู้ใช้และเลือกใช้เครื่องมือที่เหมาะสมที่สุดเพียง 1 เครื่องมือ
+
+เครื่องมือที่มี:
+1. "search_menu": ค้นหาเมนูอาหารทั่วไปด้วยข้อความ (input: {{"query": "ข้อความค้นหา เช่น อยากกินเผ็ดๆ, เมนูเส้น"}})
+2. "filter_menu": กรองเมนูตามเงื่อนไข (input: {{"ingredient": "วัตถุดิบ (เช่น หมู, ไก่, กุ้ง)", "max_price": ราคา (ตัวเลข), "category": "ประเภท (เช่น ผัด, ต้ม, ทอด, แกง, ข้าวผัด)"}}) - ใช้เมื่อระบุเงื่อนไขชัดเจน
+3. "get_dish_detail": ดูรายละเอียดเมนูแบบเต็ม (input: {{"dish_name": "ชื่อเมนู"}}) - ใช้เมื่อผู้ใช้ถามรายละเอียดของเมนูใดเมนูหนึ่งโดยเฉพาะ
+
+คำถามผู้ใช้: "{user_input}"
+
+จงตอบกลับเป็น JSON format เท่านั้น โดยมีรูปแบบดังนี้:
+```json
+{{
+  "thought": "เหตุผลในการเลือกเครื่องมือ",
+  "action": "ชื่อเครื่องมือที่เลือก (search_menu, filter_menu, get_dish_detail)",
+  "action_input": {{
+    // พารามิเตอร์ของเครื่องมือที่สอดคล้องกับ input ที่ระบุไว้
+  }}
+}}
+```
+"""
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
+        # Parse JSON
+        text = response.text.strip()
+        if text.startswith("```json"):
+            text = text[7:]
+        if text.endswith("```"):
+            text = text[:-3]
+        return json.loads(text.strip())
+    except Exception as e:
+        print("⚠️ Gemini LLM Router Error:", e)
+        # Fallback to search if LLM fails
+        return {
+            "thought": "LLM Error, falling back to search_menu",
+            "action": "search_menu",
+            "action_input": {"query": user_input}
+        }
 
 # ===============================
 # Agent (ReAct)
@@ -91,65 +88,64 @@ def agent(user_input):
     print("User Question:", user_input)
     print("ทวนคำถาม:", f"ผู้ใช้ถามว่า '{user_input}'")
 
-    # Thought
-    if "รายละเอียด" in user_input:
-        thought = "ผู้ใช้ต้องการรายละเอียดเมนู"
-        action = "get_dish_detail"
-
-    elif "ไม่เกิน" in user_input or "ราคา" in user_input:
-        thought = "ผู้ใช้ต้องการกรองเมนู"
-        action = "filter_menu"
-
-    elif extract_ingredient(user_input) or extract_category(user_input):
-        thought = "ผู้ใช้พูดถึงวัตถุดิบหรือประเภท"
-        action = "filter_menu"
-
-    else:
-        thought = "ค้นหาเมนูทั่วไป"
-        action = "search_menu"
+    # Thought & Action (Wow ⭐)
+    decision = decide_tool(user_input)
+    
+    thought = decision.get("thought", "ไม่มีเหตุผล")
+    action = decision.get("action", "search_menu")
+    action_input = decision.get("action_input", {})
 
     print("Thought:", thought)
     print("Action:", action)
+    print("Action Input:", action_input)
 
     # ===============================
-    # Action
+    # Execute Action
     # ===============================
-    if action == "get_dish_detail":
-        name = extract_dish_name(user_input)
-        result = tools[action](name)
-
-        print("Observation:", result)
-
-        if not result:
-            answer = "ไม่พบเมนูนี้ ลองพิมพ์ชื่อให้ชัดขึ้น เช่น ข้าวผัดกุ้ง"
+    result = None
+    if action in tools:
+        try:
+            result = tools[action](**action_input)
+        except Exception as e:
+            print("⚠️ Tool Execution Error:", e)
+    
+    # Tool Fallback (Wow ⭐⭐)
+    if not result:
+        print("Observation: ไม่พบข้อมูล (Empty Result)")
+        print("Thought: ไม่พบเมนูตามที่ค้นหา จึงต้องเสนอเมนูทางเลือก (Fallback)")
+        
+        # Trigger fallback action
+        fallback_query = "ยอดนิยม"
+        print(f"Action: search_menu (Fallback with '{fallback_query}')")
+        
+        fallback_result = tools["search_menu"](query=fallback_query)
+        
+        if fallback_result:
+            print("Observation: ได้รับเมนูทางเลือกยอดนิยม")
+            answer = "ขออภัยครับ ไม่พบเมนูที่ท่านค้นหา 🥺\nแต่เรามีเมนูทางเลือกที่น่าสนใจมาแนะนำครับ:\n\n"
+            for i, item in enumerate(fallback_result, 1):
+                m = item["metadata"]
+                answer += f"{i}. {m['name']} - {m['price']} บาท\n"
         else:
+            print("Observation: ไม่พบข้อมูลแม้ในเมนูทางเลือก")
+            answer = "ขออภัยครับ ไม่พบเมนูที่ท่านค้นหา และระบบขัดข้องในการหาเมนูทางเลือก ลองถามเมนูอื่นดูนะครับ"
+            
+    else:
+        # Determine Observation text
+        if action == "get_dish_detail":
+            print("Observation: พบรายละเอียดเมนู")
+        else:
+            print(f"Observation: พบเมนูที่ตรงตามเงื่อนไข {len(result)} รายการ")
+        
+        # Format Answer based on Tool
+        if action == "get_dish_detail":
             answer = format_dish_detail(result)
-
-    elif action == "filter_menu":
-        ingredient = extract_ingredient(user_input)
-        max_price = extract_price(user_input)
-        category = extract_category(user_input)
-
-        result = tools[action](
-            ingredient=ingredient,
-            max_price=max_price,
-            category=category
-        )
-
-        print("Observation:", result)
-
-        if not result:
-            answer = (
-                "ไม่พบเมนูที่ตรงเงื่อนไขครับ\n"
-                "ลองเช่น:\n"
-                "- เมนูกุ้ง\n"
-                "- เมนูทอด\n"
-                "- เมนูไม่เกิน 60 บาท"
-            )
-        else:
+        elif action == "filter_menu":
+            ingredient = action_input.get("ingredient")
+            max_price = action_input.get("max_price")
+            category = action_input.get("category")
+            
             emoji = get_emoji(ingredient, category)
-
-            # 🔥 Title
             if ingredient:
                 title = f"เมนูที่มี '{ingredient}' {emoji}\n\n"
             elif max_price:
@@ -158,28 +154,17 @@ def agent(user_input):
                 title = f"เมนูประเภท '{category}' {emoji}\n\n"
             else:
                 title = "รายการเมนู:\n\n"
-
             answer = title + format_menu_list(result)
-
-    else:
-        result = tools[action](user_input)
-
-        print("Observation:", result)
-
-        if not result:
-            answer = "ไม่พบเมนู ลองถามเช่น เมนูกุ้ง หรือ เมนูเผ็ด"
         else:
             answer = "เมนูที่แนะนำ:\n\n"
-
             for i, item in enumerate(result, 1):
                 m = item["metadata"]
                 answer += f"{i}. {m['name']} - {m['price']} บาท\n"
 
-    print("Answer:", answer)
+    print("Answer:\n" + answer)
     print("======================\n")
 
     return answer
-
 
 # ===============================
 # Run
@@ -193,4 +178,4 @@ if __name__ == "__main__":
             print("จบการทำงาน 👋")
             break
 
-        print(agent(q))
+        agent(q)

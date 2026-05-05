@@ -1,9 +1,11 @@
 import json
 import os
+import chromadb
 from dotenv import load_dotenv
 from google import genai
 from google.genai import errors
 
+from database import load_menus
 
 # ===============================
 # Load Gemini API Key
@@ -12,176 +14,165 @@ load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
+# ===============================
+# Initialize ChromaDB
+# ===============================
+chroma_client = chromadb.PersistentClient(path="./vector_store")
+collection = chroma_client.get_or_create_collection("food_menus")
 
 # ===============================
-# Load Menu Data
+# Embedding Function
 # ===============================
-def load_menus():
-    with open("data/menus.json", "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    return data["menus"]
-
+def embed_text(text):
+    try:
+        resp = client.models.embed_content(
+            model="models/gemini-embedding-2",
+            contents=text
+        )
+        return resp.embeddings[0].values
+    except Exception as e:
+        print(f"⚠️ Embedding Error: {e}")
+        return None
 
 # ===============================
-# Check whether query is food-related
+# Check whether query is food-related (Wow ⭐⭐ - ป้องกันคำถามไม่เกี่ยว)
 # ===============================
 def is_food_related(query):
     food_keywords = [
         "เมนู", "อาหาร", "กิน", "หิว", "อยากกิน", "แนะนำ",
-        "หมู", "ไก่", "กุ้ง", "ปู", "ปลา", "ไข่",
+        "หมู", "ไก่", "กุ้ง", "ปู", "ปลา", "ไข่", "เนื้อ", "ผัก",
         "ข้าว", "เส้น", "ผัด", "ต้ม", "ทอด", "แกง",
         "เผ็ด", "ไม่เผ็ด", "หวาน", "เปรี้ยว", "กรอบ",
-        "ราคา", "บาท", "แคลอรี่", "ถูก", "แพง"
+        "ราคา", "บาท", "แคลอรี่", "ถูก", "แพง", "แซ่บ", "น้ำ", "อะไรดี"
     ]
-
     return any(keyword in query for keyword in food_keywords)
 
-
 # ===============================
-# Local Search Fallback
-# ใช้กรณี Gemini ล่ม หรือ API error
+# Embed Data into Vector Store
 # ===============================
-def local_search_menu(query: str, n_results: int = 3):
+def load_and_embed_menus():
     menus = load_menus()
-    results = []
+    print("เริ่มฝังข้อมูลลง ChromaDB...")
+    
+    # Check if already embedded
+    existing_count = collection.count()
+    if existing_count >= len(menus):
+        print(f"✅ ข้อมูลถูกฝังไว้แล้ว ({existing_count} รายการ) ข้ามการฝังซ้ำ")
+        return
 
     for menu in menus:
-        score = 0
-
-        searchable_text = (
-            menu["name"] + " " +
-            menu["category"] + " " +
-            menu["description"] + " " +
-            " ".join(menu["ingredients"]) + " " +
-            " ".join(menu["tags"])
+        # Create a rich document for embedding
+        text = (
+            f"ชื่อเมนู: {menu['name']}\n"
+            f"ประเภท: {menu['category']}\n"
+            f"ราคา: {menu['price']} บาท\n"
+            f"แคลอรี่: {menu['calories']} kcal\n"
+            f"ส่วนผสม: {', '.join(menu['ingredients'])}\n"
+            f"แท็ก: {', '.join(menu['tags'])}\n"
+            f"รายละเอียด: {menu['description']}"
         )
-
-        if query in searchable_text:
-            score += 5
-
-        for word in query.split():
-            if word in searchable_text:
-                score += 1
-
-        if score > 0:
-            results.append((score, menu))
-
-    results.sort(reverse=True, key=lambda x: x[0])
-
-    return [
-        {
-            "text": menu["description"],
-            "metadata": menu
-        }
-        for score, menu in results[:n_results]
-    ]
-
+        
+        embedding = embed_text(text)
+        if embedding:
+            # Prepare metadata (ChromaDB does not accept empty lists or complex objects in metadata)
+            meta = {
+                "id": menu["id"],
+                "name": menu["name"],
+                "category": menu["category"],
+                "price": menu["price"],
+                "calories": menu["calories"],
+                "ingredients": ", ".join(menu["ingredients"]),
+                "allergens": ", ".join(menu["allergens"]) if menu["allergens"] else "ไม่มี",
+                "description": menu["description"],
+                "tags": ", ".join(menu["tags"])
+            }
+            
+            collection.upsert(
+                ids=[menu["id"]],
+                embeddings=[embedding],
+                documents=[text],
+                metadatas=[meta]
+            )
+            print(f"✅ Embedded: {menu['name']}")
+    
+    print(f"✅ บันทึกข้อมูลสำเร็จทั้งหมด {len(menus)} รายการ")
 
 # ===============================
-# Gemini Search Tool
+# Query Rewriting (Wow ⭐ - ช่วยปรับคำค้นหาให้ตรงขึ้น)
+# ===============================
+def rewrite_query(original_query: str) -> str:
+    """
+    ปรับปรุงคำถามของผู้ใช้ให้เหมาะกับการค้นหาด้วย Semantic Search มากขึ้น
+    """
+    try:
+        resp = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=f"ปรับปรุงคำถามนี้ให้เป็นคีย์เวิร์ดสั้นๆ สำหรับค้นหาเมนูอาหารตามสั่ง (ไม่ต้องมีคำตอบรับหรือคำสร้อย): '{original_query}'"
+        )
+        improved_query = resp.text.strip()
+        print(f"🔄 [Query Rewriting]: '{original_query}' -> '{improved_query}'")
+        return improved_query
+    except Exception as e:
+        print(f"⚠️ Query Rewriting Error: {e}")
+        return original_query
+
+# ===============================
+# Semantic Search Tool (ChromaDB)
 # ===============================
 def search_menu(query: str, n_results: int = 3):
-    menus = load_menus()
-
-    # ถ้าคำถามไม่เกี่ยวกับอาหาร ให้หยุดทันที
+    """
+    ค้นหาเมนูที่ตรงกับความต้องการด้วย Semantic Search (Vector Store)
+    """
+    # กรองคำถามที่ไม่ใช่อาหาร
     if not is_food_related(query):
         return []
 
-    menu_text = ""
-
-    for menu in menus:
-        menu_text += (
-            f"- {menu['name']} | "
-            f"ประเภท: {menu['category']} | "
-            f"ราคา: {menu['price']} บาท | "
-            f"แคลอรี่: {menu['calories']} kcal | "
-            f"ส่วนผสม: {', '.join(menu['ingredients'])} | "
-            f"แท็ก: {', '.join(menu['tags'])}\n"
-        )
-
-    prompt = f"""
-คุณคือผู้ช่วยแนะนำเมนูอาหาร
-
-คำถามผู้ใช้:
-{query}
-
-รายการเมนูที่มีให้เลือกเท่านั้น:
-{menu_text}
-
-หน้าที่ของคุณ:
-เลือกเมนูที่เหมาะสมที่สุดไม่เกิน {n_results} รายการจากรายการที่ให้เท่านั้น
-
-กติกาสำคัญ:
-- ถ้าคำถามไม่เกี่ยวกับอาหาร ให้ตอบว่า NOT_FOUND
-- ถ้าไม่พบเมนูที่เกี่ยวข้องจริง ๆ ให้ตอบว่า NOT_FOUND
-- ห้ามเดาคำผิด เช่น หมา เป็น หมู
-- ห้ามแนะนำเมนูที่ไม่เกี่ยวกับคำถาม
-- ห้ามแต่งชื่อเมนูใหม่
-- ต้องตอบเฉพาะชื่อเมนูที่มีอยู่ในรายการเท่านั้น
-- ตอบทีละ 1 เมนูต่อ 1 บรรทัด
-- ห้ามใส่เลขลำดับ
-- ห้ามอธิบายเพิ่ม
-"""
-
-    # เรียก Gemini พร้อม fallback ถ้า Gemini ล่ม
-    try:
-        response = client.models.generate_content(
-            model="gemini-2.5-flash",
-            contents=prompt
-        )
-    except errors.ServerError:
-        print("⚠️ Gemini มีคนใช้เยอะชั่วคราว → ใช้ Local Search แทน")
-        return local_search_menu(query, n_results)
-
-    except Exception as e:
-        print("⚠️ Gemini error:", e)
-        print("ใช้ Local Search แทน")
-        return local_search_menu(query, n_results)
-
-    ai_text = response.text.strip()
-
-    if "NOT_FOUND" in ai_text:
+    # ถ้าไม่มีข้อมูลใน Vector Store ให้ load ก่อน
+    if collection.count() == 0:
+        load_and_embed_menus()
+        
+    # Wow ⭐: Query Rewriting
+    improved_query = rewrite_query(query)
+        
+    query_embedding = embed_text(improved_query)
+    
+    if not query_embedding:
+        print("⚠️ ไม่สามารถสร้าง embedding ได้ (ใช้ fallback ไปที่การส่งคืนข้อมูลว่าง)")
         return []
 
-    selected_names = ai_text.splitlines()
-
-    valid_menu_names = [menu["name"] for menu in menus]
-    results = []
-
-    for name in selected_names:
-        clean_name = name.strip("- ").strip()
-
-        # Validate ว่า Gemini ตอบชื่อเมนูที่มีอยู่จริงเท่านั้น
-        if clean_name not in valid_menu_names:
-            continue
-
-        for menu in menus:
-            if clean_name == menu["name"]:
-                results.append({
-                    "text": menu["description"],
-                    "metadata": menu
-                })
-
-    return results[:n_results]
-
+    # Query ChromaDB
+    results = collection.query(
+        query_embeddings=[query_embedding],
+        n_results=n_results
+    )
+    
+    formatted_results = []
+    
+    # Format the results to match previous interface
+    if results["documents"] and results["documents"][0]:
+        for i in range(len(results["documents"][0])):
+            formatted_results.append({
+                "text": results["documents"][0][i],
+                "metadata": results["metadatas"][0][i]
+            })
+            
+    return formatted_results
 
 # ===============================
 # Test
 # ===============================
 if __name__ == "__main__":
-    print("✅ ใช้ Gemini Search")
-
+    print("✅ เริ่มทดสอบ Vector Store (ChromaDB)")
+    load_and_embed_menus()
+    
     test_queries = [
-        "อยากกินเมนูเผ็ด",
+        "อยากกินเมนูเผ็ดๆ",
         "ขอเมนูที่มีกุ้ง",
-        "หมา",
-        "รถ"
+        "รถยนต์", # should be blocked
     ]
 
     for query in test_queries:
         print("\nคำถาม:", query)
-
         results = search_menu(query, n_results=3)
 
         if not results:
@@ -190,4 +181,3 @@ if __name__ == "__main__":
             for i, item in enumerate(results, start=1):
                 menu = item["metadata"]
                 print(f"{i}. {menu['name']} - {menu['price']} บาท")
-                print(f"   รายละเอียด: {menu['description']}")

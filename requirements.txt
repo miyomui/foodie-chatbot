@@ -1,8 +1,6 @@
-openai
 chromadb
-gradio
-python-dotenv
-tiktoken
-langchain
-langchain-openai
 google-genai
+python-dotenv
+gradio
+langchain
+langchain-google-genai
