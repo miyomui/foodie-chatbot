@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NongHiwKhaow - คิดเมนูอาหาร</title>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .hero-bg {
+            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1559314809-0d155014e29e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+
+        .chip-checkbox:checked+label {
+            background-color: #ea580c;
+            /* orange-600 */
+            color: white;
+            border-color: #ea580c;
+            box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3);
+        }
+
+        .radio-custom:checked+label {
+            background-color: #ea580c;
+            color: white;
+            border-color: #ea580c;
+            box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3);
+        }
+
+        /* Hide native checkbox/radio */
+        input[type="checkbox"],
+        input[type="radio"] {
+            display: none;
+        }
+
+        .form-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.02);
+            border: 1px solid #f1f5f9;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col md:flex-row relative">
+
+    <!-- Floating Chat Button -->
+    <a href="/chat"
+        class="fixed top-6 right-6 z-50 bg-white text-orange-600 border border-orange-200 shadow-md hover:shadow-lg hover:bg-orange-50 font-medium py-2.5 px-5 rounded-full flex items-center gap-2 transition-all transform hover:scale-105">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+                d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z"
+                clip-rule="evenodd" />
+        </svg>
+        คุยกับแชทบอท
+    </a>
+
+    <!-- Left Hero Section -->
+    <div class="md:w-5/12 hero-bg text-white flex flex-col justify-center p-10 lg:p-16 relative">
+        <div class="relative z-10">
+            <div
+                class="inline-block px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-sm font-medium mb-6">
+                NongHiwKhaow Assistant
+            </div>
+            <h1 class="text-5xl lg:text-6xl font-bold mb-4 leading-tight">วันนี้<br><span
+                    class="text-orange-400">กินอะไรดี?</span></h1>
+            <p class="text-lg lg:text-xl text-gray-200 mb-8 max-w-md font-light">
+                ให้น้องหิวข้าวช่วยคิดเมนูอาหารที่ใช่สำหรับคุณ เพียงเลือกวัตถุดิบที่คุณต้องการ
+            </p>
+        </div>
+    </div>
+
+    <!-- Right Form Section -->
+    <div class="md:w-7/12 bg-white flex flex-col justify-center p-8 lg:p-16 overflow-y-auto">
+        <div class="max-w-2xl w-full mx-auto">
+            <h2 class="text-3xl font-semibold text-gray-800 mb-2">เลือกความต้องการของคุณ</h2>
+            <p class="text-gray-500 mb-8 font-light">ปรับแต่งเมนูตามใจชอบ แล้วเราจะแนะนำสิ่งที่ดีที่สุดให้</p>
+
+            <form id="food-form" class="space-y-6">
+
+                <!-- Category -->
+                <div class="form-card">
+                    <label class="block text-lg font-medium text-gray-800 mb-4">1. ประเภทเมนู</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <div>
+                            <input type="radio" id="cat-any" name="category" value="คิดไม่ออก" class="radio-custom"
+                                checked>
+                            <label for="cat-any"
+                                class="block text-center px-4 py-3 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">คิดไม่ออก</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="cat-stir" name="category" value="ผัด" class="radio-custom">
+                            <label for="cat-stir"
+                                class="block text-center px-4 py-3 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ผัด</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="cat-friedrice" name="category" value="ข้าวผัด" class="radio-custom">
+                            <label for="cat-friedrice"
+                                class="block text-center px-4 py-3 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ข้าวผัด</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="cat-fried" name="category" value="ทอด" class="radio-custom">
+                            <label for="cat-fried"
+                                class="block text-center px-4 py-3 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ทอด</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="cat-boiled" name="category" value="ต้ม" class="radio-custom">
+                            <label for="cat-boiled"
+                                class="block text-center px-4 py-3 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ต้ม</label>
+                        </div>
+                        <div>
+                            <input type="radio" id="cat-curry" name="category" value="แกง" class="radio-custom">
+                            <label for="cat-curry"
+                                class="block text-center px-4 py-3 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">แกง</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ingredients -->
+                <div class="form-card">
+                    <label class="block text-lg font-medium text-gray-800 mb-4">2. เลือกวัตถุดิบหลัก <span
+                            class="text-sm font-normal text-gray-400 ml-2">(เลือกได้หลายอย่าง)</span></label>
+                    <div class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        <div>
+                            <input type="checkbox" id="ing-pork" name="ingredients" value="หมู" class="chip-checkbox">
+                            <label for="ing-pork"
+                                class="block text-center px-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">หมู</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="ing-chicken" name="ingredients" value="ไก่"
+                                class="chip-checkbox">
+                            <label for="ing-chicken"
+                                class="block text-center px-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ไก่</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="ing-shrimp" name="ingredients" value="กุ้ง"
+                                class="chip-checkbox">
+                            <label for="ing-shrimp"
+                                class="block text-center px-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">กุ้ง</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="ing-crab" name="ingredients" value="ปู" class="chip-checkbox">
+                            <label for="ing-crab"
+                                class="block text-center px-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ปู</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="ing-fish" name="ingredients" value="ปลา" class="chip-checkbox">
+                            <label for="ing-fish"
+                                class="block text-center px-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ปลา</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="ing-egg" name="ingredients" value="ไข่" class="chip-checkbox">
+                            <label for="ing-egg"
+                                class="block text-center px-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ไข่</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="ing-beef" name="ingredients" value="เนื้อ" class="chip-checkbox">
+                            <label for="ing-beef"
+                                class="block text-center px-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">เนื้อ</label>
+                        </div>
+                        <div>
+                            <input type="checkbox" id="ing-seafood" name="ingredients" value="ทะเล"
+                                class="chip-checkbox">
+                            <label for="ing-seafood"
+                                class="block text-center px-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ทะเล</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vegetables & Allergy row -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <!-- Vegetables -->
+                    <div class="form-card">
+                        <label class="block text-lg font-medium text-gray-800 mb-4">3. ใส่ผักหรือไม่?</label>
+                        <div class="flex flex-col gap-3">
+                            <div class="flex-1">
+                                <input type="radio" id="veg-yes" name="vegetables" value="กินผัก" class="radio-custom"
+                                    checked>
+                                <label for="veg-yes"
+                                    class="block text-center px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium w-full">ใส่ผัก</label>
+                            </div>
+                            <div class="flex-1">
+                                <input type="radio" id="veg-no" name="vegetables" value="ไม่กินผัก"
+                                    class="radio-custom">
+                                <label for="veg-no"
+                                    class="block text-center px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium w-full">ไม่ใส่ผัก</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Allergy -->
+                    <div class="form-card flex flex-col justify-between">
+                        <label for="allergy" class="block text-lg font-medium text-gray-800 mb-4">4.
+                            แพ้/ไม่ทานอะไร</label>
+                        <textarea id="allergy" name="allergy" placeholder="เช่น ถั่วลิสง, เผ็ดน้อย..." rows="2"
+                            class="w-full h-full px-4 py-3 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all text-gray-700 placeholder-gray-400 font-light resize-none"></textarea>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-6">
+                    <button type="submit"
+                        class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 px-8 rounded-xl shadow-[0_8px_20px_-6px_rgba(249,115,22,0.6)] hover:shadow-[0_12px_25px_-6px_rgba(249,115,22,0.7)] transition-all transform hover:-translate-y-1 text-lg flex justify-center items-center gap-2">
+                        <span>คิดเมนูให้ฉันเลย</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                                clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </form>
+
+            <!-- Result Area (hidden by default) -->
+            <div id="result-area"
+                class="hidden mt-8 p-8 bg-orange-50 border border-orange-100 rounded-2xl shadow-inner">
+                <h3 class="text-xl font-semibold text-orange-800 mb-4">ผลลัพธ์จาก AI:</h3>
+                <div class="p-4 bg-white rounded-xl border border-orange-200 shadow-sm mb-4">
+                    <div id="prompt-result"
+                        class="prose prose-orange prose-sm md:prose-base max-w-none text-gray-800 font-medium leading-relaxed">
+                    </div>
+                </div>
+
+                <!-- Agent Logs Section -->
+                <div>
+                    <button type="button" id="toggle-logs-btn"
+                        class="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-600 transition-colors mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                        </svg>
+                        ดูเบื้องหลังการคิดของ AI
+                    </button>
+                    <div id="logs-container" class="hidden">
+                        <pre id="agent-logs"
+                            class="text-xs text-green-400 bg-gray-900 p-4 rounded-xl overflow-auto whitespace-pre-wrap max-h-64 font-mono shadow-inner border border-gray-800"></pre>
+                    </div>
+                </div>
+
+                <button id="reset-btn"
+                    class="mt-6 text-orange-600 hover:text-orange-800 font-medium underline flex items-center gap-1 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
+                            clip-rule="evenodd" />
+                    </svg>
+                    กลับไปเลือกใหม่
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSessionId = null;
+
+        document.getElementById('food-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            // Get selected category
+            const category = document.querySelector('input[name="category"]:checked').value;
+
+            // Get selected ingredients
+            const ingredients = [];
+            document.querySelectorAll('input[name="ingredients"]:checked').forEach((checkbox) => {
+                ingredients.push(checkbox.value);
+            });
+
+            // Get vegetable preference
+            const vegetables = document.querySelector('input[name="vegetables"]:checked').value;
+
+            // Get allergy
+            const allergy = document.getElementById('allergy').value.trim();
+
+            // Generate prompt
+            let promptText = "ช่วยแนะนำเมนูอาหารมาให้ 3 อย่างพร้อมบอกแคลอรี่และส่วนผสมหลักของแต่ละเมนูด้วยครับ ";
+
+            if (category !== "คิดไม่ออก") {
+                promptText += "ขอเป็นประเภท '" + category + "' ";
+            }
+
+            if (ingredients.length > 0) {
+                promptText += "อยากกินวัตถุดิบเป็น " + ingredients.join(", ") + " ";
+            } else {
+                promptText += "เอาวัตถุดิบอะไรก็ได้ ";
+            }
+
+            promptText += "แบบ" + vegetables;
+
+            if (allergy) {
+                promptText += " และขอไม่ใส่/แพ้ " + allergy;
+            }
+
+            const submitBtn = document.querySelector('button[type="submit"]');
+            const originalBtnHtml = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="animate-pulse">กำลังคิดเมนูให้คุณ...</span>';
+            submitBtn.disabled = true;
+
+            try {
+
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        message: promptText,
+                        session_id: currentSessionId
+                    })
+                });
+
+                const data = await response.json();
+                currentSessionId = data.session_id;
+
+                document.getElementById('food-form').classList.add('hidden');
+                document.getElementById('result-area').classList.remove('hidden');
+
+                document.getElementById('prompt-result').innerHTML = marked.parse(data.answer);
+
+                document.getElementById('agent-logs').textContent = data.logs || "ไม่พบข้อมูลเบื้องหลัง...";
+
+            } catch (error) {
+                console.error("Error calling API:", error);
+                alert("เกิดข้อผิดพลาดในการเชื่อมต่อกับ AI กรุณาลองใหม่อีกครั้ง");
+            } finally {
+
+                submitBtn.innerHTML = originalBtnHtml;
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Toggle logs
+        document.getElementById('toggle-logs-btn').addEventListener('click', function () {
+            const logsContainer = document.getElementById('logs-container');
+            if (logsContainer.classList.contains('hidden')) {
+                logsContainer.classList.remove('hidden');
+            } else {
+                logsContainer.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', function () {
+            document.getElementById('food-form').classList.remove('hidden');
+            document.getElementById('result-area').classList.add('hidden');
+            document.getElementById('logs-container').classList.add('hidden');
+        });
+    </script>
+</body>
+
+</html>

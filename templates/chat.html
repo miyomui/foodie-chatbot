@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NongHiwKhaow - AI Chat</title>
+    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Kanit', sans-serif;
+            background-color: #343541;
+            /* ChatGPT Dark Theme Main */
+            color: #ececf1;
+        }
+
+        .sidebar {
+            background-color: #202123;
+        }
+
+        .chat-bg {
+            background-color: #343541;
+        }
+
+        .message-bot {
+            background-color: #444654;
+        }
+
+        .message-user {
+            background-color: #343541;
+        }
+
+        .input-bg {
+            background-color: #40414f;
+            border: 1px solid rgba(32, 33, 35, .5);
+            box-shadow: 0 0 15px rgba(0, 0, 0, .1);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #565869;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #717284;
+        }
+    </style>
+</head>
+
+<body class="h-screen flex overflow-hidden selection:bg-orange-500 selection:text-white">
+
+    <!-- Sidebar (Hidden on mobile by default) -->
+    <div class="sidebar w-64 flex-shrink-0 flex-col hidden md:flex h-full border-r border-white/20">
+        <div class="p-4">
+            <button id="new-chat-btn"
+                class="flex items-center gap-3 w-full p-3 rounded-md border border-white/20 hover:bg-gray-800 transition-colors text-sm font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                แชทใหม่
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto px-4 py-2">
+            <!-- Chat history list could go here -->
+            <div class="text-xs text-gray-400 font-semibold mb-3 px-2">เมนูการใช้งาน</div>
+            <a href="/"
+                class="flex items-center gap-3 w-full p-3 rounded-md hover:bg-gray-800 transition-colors text-sm text-gray-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                กลับไปหน้าหลัก
+            </a>
+        </div>
+        <div class="p-4 border-t border-white/20">
+            <div class="flex items-center gap-3 w-full p-2 rounded-md">
+                <div
+                    class="w-8 h-8 rounded-sm bg-orange-500 flex items-center justify-center font-bold text-white shadow-sm">
+                    NH</div>
+                <span class="text-sm font-medium">NongHiwKhaow</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Chat Area -->
+    <div class="flex-1 flex flex-col h-full relative chat-bg">
+
+        <!-- Mobile Header -->
+        <div class="md:hidden flex items-center justify-between p-4 border-b border-white/20 bg-[#343541] z-10">
+            <button class="text-gray-300 hover:text-white">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+            <div class="font-medium">NongHiwKhaow</div>
+            <a href="/" class="text-orange-500 hover:text-orange-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+            </a>
+        </div>
+
+        <!-- Chat History -->
+        <div id="chat-container" class="flex-1 overflow-y-auto pb-32">
+            <!-- Welcome Message -->
+            <div class="h-full flex flex-col items-center justify-center text-center p-8" id="empty-state">
+                <div
+                    class="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-orange-500/20">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z" />
+                    </svg>
+                </div>
+                <h2 class="text-3xl font-semibold mb-2">น้องหิวข้าว</h2>
+                <p class="text-gray-400 max-w-md">อยากกินอะไรพิมพ์บอกได้เลยจ้า เดี๋ยวจัดให้!</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-8 w-full max-w-2xl">
+                    <button
+                        class="bg-[#40414f] hover:bg-[#2A2B32] border border-white/10 p-4 rounded-xl text-left transition text-sm text-gray-300"
+                        onclick="document.getElementById('message-input').value='อยากกินอาหารทะเลแซ่บๆ แนะนำหน่อย';">
+                        "อยากกินอาหารทะเลแซ่บๆ แนะนำหน่อย"
+                    </button>
+                    <button
+                        class="bg-[#40414f] hover:bg-[#2A2B32] border border-white/10 p-4 rounded-xl text-left transition text-sm text-gray-300"
+                        onclick="document.getElementById('message-input').value='เมนูหมูที่ไม่เผ็ด สำหรับเด็ก';">
+                        "เมนูหมูที่ไม่เผ็ด สำหรับเด็ก"
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div
+            class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-[#343541] via-[#343541] to-transparent pt-10 pb-6 px-4">
+            <div class="max-w-3xl mx-auto relative">
+                <form id="chat-form"
+                    class="relative flex items-end w-full input-bg rounded-xl overflow-hidden py-3 pl-4 pr-12 focus-within:ring-1 focus-within:ring-orange-500/50 transition-all">
+                    <textarea id="message-input" rows="1" placeholder="พิมพ์ข้อความที่นี่..."
+                        class="w-full max-h-48 bg-transparent text-white placeholder-gray-400 border-0 focus:ring-0 resize-none outline-none py-0 m-0"
+                        style="min-height: 24px;"></textarea>
+                    <button type="submit" id="send-btn"
+                        class="absolute right-3 bottom-2.5 p-1.5 rounded-md text-gray-400 hover:bg-[#2A2B32] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path
+                                d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                        </svg>
+                    </button>
+                </form>
+                <div class="text-center mt-3 text-xs text-gray-500">
+                    NongHiwKhaow สามารถทำผิดพลาดได้ โปรดตรวจสอบความถูกต้องของเมนู
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Template for User Message -->
+    <template id="tmpl-user">
+        <div class="w-full message-user text-gray-100 border-b border-black/10">
+            <div class="max-w-3xl mx-auto flex gap-4 p-4 md:py-6 md:px-4 text-base">
+                <div class="w-8 h-8 rounded-sm bg-gray-600 flex-shrink-0 flex items-center justify-center font-bold">U
+                </div>
+                <div class="flex-1 whitespace-pre-wrap message-content"></div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Template for Bot Message -->
+    <template id="tmpl-bot">
+        <div class="w-full message-bot text-gray-100 border-b border-black/10">
+            <div class="max-w-3xl mx-auto flex gap-4 p-4 md:py-6 md:px-4 text-base group">
+                <div class="w-8 h-8 rounded-sm bg-orange-500 flex-shrink-0 flex items-center justify-center shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20"
+                        fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="prose prose-invert max-w-none message-content text-gray-200"></div>
+                    <div class="mt-4 pt-4 border-t border-white/10 logs-container hidden">
+                        <button
+                            class="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition toggle-logs-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                            </svg>
+                            ดูเบื้องหลังการคิดของ AI
+                        </button>
+                        <pre
+                            class="mt-2 text-xs text-green-400 bg-gray-900 p-3 rounded-md overflow-x-auto font-mono hidden log-content"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <!-- Loading Indicator Template -->
+    <template id="tmpl-loading">
+        <div class="w-full message-bot text-gray-100 border-b border-black/10" id="loading-indicator">
+            <div class="max-w-3xl mx-auto flex gap-4 p-4 md:py-6 md:px-4 text-base">
+                <div class="w-8 h-8 rounded-sm bg-orange-500 flex-shrink-0 flex items-center justify-center">
+                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
+                        viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                        </circle>
+                        <path class="opacity-75" fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                        </path>
+                    </svg>
+                </div>
+                <div class="flex-1 text-gray-400 flex items-center">
+                    กำลังคิดเมนูให้...
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        let currentSessionId = null;
+        const chatContainer = document.getElementById('chat-container');
+        const form = document.getElementById('chat-form');
+        const input = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const emptyState = document.getElementById('empty-state');
+
+        // Auto-resize textarea
+        input.addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+            if (this.value.trim().length > 0) {
+                sendBtn.classList.add('text-white', 'bg-orange-500');
+                sendBtn.classList.remove('text-gray-400');
+            } else {
+                sendBtn.classList.remove('text-white', 'bg-orange-500');
+                sendBtn.classList.add('text-gray-400');
+            }
+        });
+
+        // Submit on Enter (Shift+Enter for newline)
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (input.value.trim()) {
+                    form.dispatchEvent(new Event('submit'));
+                }
+            }
+        });
+
+        function scrollToBottom() {
+            chatContainer.scrollTo({
+                top: chatContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        }
+
+        function addUserMessage(text) {
+            const tmpl = document.getElementById('tmpl-user');
+            const clone = tmpl.content.cloneNode(true);
+            clone.querySelector('.message-content').textContent = text;
+            chatContainer.appendChild(clone);
+            if (emptyState) emptyState.style.display = 'none';
+            scrollToBottom();
+        }
+
+        function showLoading() {
+            const tmpl = document.getElementById('tmpl-loading');
+            chatContainer.appendChild(tmpl.content.cloneNode(true));
+            scrollToBottom();
+        }
+
+        function addBotMessageLive() {
+            const tmpl = document.getElementById('tmpl-bot');
+            const clone = tmpl.content.cloneNode(true);
+            const container = document.createElement('div');
+            container.appendChild(clone);
+            const contentNode = container.querySelector('.message-content');
+
+            const logsContainer = container.querySelector('.logs-container');
+            const logContent = container.querySelector('.log-content');
+            const toggleBtn = container.querySelector('.toggle-logs-btn');
+
+            // Show logs by default while streaming
+            logsContainer.classList.remove('hidden');
+            logContent.classList.remove('hidden');
+            toggleBtn.addEventListener('click', function () {
+                logContent.classList.toggle('hidden');
+            });
+
+            chatContainer.appendChild(container.firstElementChild);
+            scrollToBottom();
+
+            return {
+                setContent: (html) => { contentNode.innerHTML = html; scrollToBottom(); },
+                appendLog: (text) => { logContent.textContent += text; scrollToBottom(); },
+                getLogContent: () => logContent.textContent,
+                collapseLog: () => { logContent.classList.add('hidden'); }
+            };
+        }
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Reset input
+            input.value = '';
+            input.style.height = 'auto';
+            sendBtn.classList.remove('text-white', 'bg-orange-500');
+            sendBtn.classList.add('text-gray-400');
+            input.disabled = true;
+
+            // Add user message to UI
+            addUserMessage(message);
+
+            // Prepare live bot message
+            const botUI = addBotMessageLive();
+            botUI.setContent("<span class='animate-pulse text-gray-400'>กำลังคิดเมนูให้...</span>");
+
+            try {
+                const response = await fetch('/api/chat_stream', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        session_id: currentSessionId
+                    })
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder('utf-8');
+                let buffer = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // Keep incomplete line in buffer
+
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.substring(6));
+                                if (data.type === 'log') {
+                                    botUI.appendLog(data.content);
+                                } else if (data.type === 'answer') {
+                                    botUI.setContent(marked.parse(data.content));
+                                    currentSessionId = data.session_id;
+                                    // Collapse log automatically when finished, if desired
+                                    botUI.collapseLog();
+                                } else if (data.type === 'error') {
+                                    botUI.setContent("<span class='text-red-400'>เกิดข้อผิดพลาด: " + data.content + "</span>");
+                                }
+                            } catch (err) {
+                                console.error('Parse error:', err, line);
+                            }
+                        }
+                    }
+                }
+
+                if (botUI.getLogContent().trim() === '') {
+                    botUI.setContent(botUI.getLogContent());
+
+                }
+
+            } catch (error) {
+                console.error("Error calling API:", error);
+                botUI.setContent("<span class='text-red-400'>ขออภัย เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง</span>");
+            } finally {
+                input.disabled = false;
+                input.focus();
+            }
+        });
+
+        document.getElementById('new-chat-btn').addEventListener('click', () => {
+            currentSessionId = null;
+            chatContainer.innerHTML = '';
+            if (emptyState) {
+                emptyState.style.display = 'flex';
+                chatContainer.appendChild(emptyState);
+            }
+        });
+    </script>
+</body>
+
+</html>
