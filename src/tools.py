@@ -1,6 +1,7 @@
-import os
-import json
-from .database import load_menus
+try:
+    from .database import load_menus
+except ImportError:
+    from database import load_menus
 
 def filter_menu(ingredient=None, max_price=None, category=None, max_calories=None, exclude_allergen=None):
     """

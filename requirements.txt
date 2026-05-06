@@ -1,6 +1,7 @@
 chromadb
-google-genai
+openai
 python-dotenv
 gradio
 langchain
-langchain-google-genai
+langchain-classic
+langchain-openai

@@ -1,47 +1,75 @@
-import json
+import hashlib
+import math
 import os
+import re
 import chromadb
-from dotenv import load_dotenv
-from google import genai
-from google.genai import errors
 
 # Relative imports
 try:
     from .database import load_menus
+    from .llm import generate_text
 except ImportError:
     from database import load_menus
+    from llm import generate_text
 
 # หา Path ของโฟลเดอร์ Root ของโปรเจกต์
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VECTOR_STORE_PATH = os.path.join(BASE_DIR, "vector_store")
-ENV_PATH = os.path.join(BASE_DIR, ".env")
-
-# ===============================
-# Load Gemini API Key
-# ===============================
-load_dotenv(ENV_PATH)
-
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+_embedding_provider = "local"
+_collections = {}
+LOCAL_EMBEDDING_DIM = 256
 
 # ===============================
 # Initialize ChromaDB
 # ===============================
+os.makedirs(VECTOR_STORE_PATH, exist_ok=True)
 chroma_client = chromadb.PersistentClient(path=VECTOR_STORE_PATH)
-collection = chroma_client.get_or_create_collection("food_menus")
+
+
+def _get_collection(provider: str):
+    collection_name = f"food_menus_{provider}"
+    if collection_name not in _collections:
+        _collections[collection_name] = chroma_client.get_or_create_collection(
+            collection_name,
+            metadata={"embedding_provider": provider},
+        )
+    return _collections[collection_name]
+
+
+def _tokens(text: str):
+    text = text.lower()
+    chunks = re.findall(r"[a-z0-9]+|[ก-๙]+", text)
+    tokens = []
+    for chunk in chunks:
+        tokens.append(chunk)
+        if len(chunk) > 1:
+            tokens.extend(chunk[i:i + 2] for i in range(len(chunk) - 1))
+        if len(chunk) > 2:
+            tokens.extend(chunk[i:i + 3] for i in range(len(chunk) - 2))
+    return tokens
+
+
+def _local_embedding(text: str):
+    vector = [0.0] * LOCAL_EMBEDDING_DIM
+    for token in _tokens(text):
+        digest = hashlib.blake2b(token.encode("utf-8"), digest_size=8).digest()
+        value = int.from_bytes(digest, "big")
+        index = value % LOCAL_EMBEDDING_DIM
+        sign = 1.0 if (value >> 8) % 2 == 0 else -1.0
+        vector[index] += sign
+
+    norm = math.sqrt(sum(v * v for v in vector)) or 1.0
+    return [v / norm for v in vector]
+
+
+def _resolve_embedding_provider() -> str:
+    return _embedding_provider
 
 # ===============================
 # Embedding Function
 # ===============================
 def embed_text(text):
-    try:
-        resp = client.models.embed_content(
-            model="models/gemini-embedding-2",
-            contents=text
-        )
-        return resp.embeddings[0].values
-    except Exception as e:
-        print(f"⚠️ Embedding Error: {e}")
-        return None
+    return _local_embedding(text)
 
 # ===============================
 # Check whether query is food-related
@@ -61,13 +89,17 @@ def is_food_related(query):
 # ===============================
 def load_and_embed_menus():
     menus = load_menus()
-    print("เริ่มฝังข้อมูลลง ChromaDB...")
+    provider = _resolve_embedding_provider()
+    collection = _get_collection(provider)
+    print(f"เริ่มฝังข้อมูลลง ChromaDB ด้วย {provider} embedding...")
     
     existing_count = collection.count()
     if existing_count >= len(menus):
         print(f"✅ ข้อมูลถูกฝังไว้แล้ว ({existing_count} รายการ) ข้ามการฝังซ้ำ")
         return
 
+    embedded_count = 0
+    failed_count = 0
     for menu in menus:
         text = (
             f"ชื่อเมนู: {menu['name']}\n"
@@ -100,23 +132,33 @@ def load_and_embed_menus():
                 metadatas=[meta]
             )
             print(f"✅ Embedded: {menu['name']}")
+            embedded_count += 1
+        else:
+            failed_count += 1
     
-    print(f"✅ บันทึกข้อมูลสำเร็จทั้งหมด {len(menus)} รายการ")
+    print(f"✅ บันทึกข้อมูลสำเร็จ {embedded_count}/{len(menus)} รายการ")
+    if failed_count:
+        print(f"⚠️ ฝังข้อมูลไม่สำเร็จ {failed_count} รายการ")
+
+
+def ensure_vector_store():
+    """
+    เตรียม vector_store ให้อัตโนมัติสำหรับเครื่องใหม่หรือคนที่ clone โปรเจกต์ไปใช้
+    """
+    load_and_embed_menus()
 
 # ===============================
 # Query Rewriting
 # ===============================
 def rewrite_query(original_query: str) -> str:
     try:
-        resp = client.models.generate_content(
-            model="gemini-flash-latest",
-            contents=f"ปรับปรุงคำถามนี้ให้เป็นคีย์เวิร์ดสั้นๆ สำหรับค้นหาเมนูอาหารตามสั่ง (ไม่ต้องมีคำตอบรับหรือคำสร้อย): '{original_query}'"
+        improved_query = generate_text(
+            f"ปรับปรุงคำถามนี้ให้เป็นคีย์เวิร์ดสั้นๆ สำหรับค้นหาเมนูอาหารตามสั่ง (ไม่ต้องมีคำตอบรับหรือคำสร้อย): '{original_query}'"
         )
-        improved_query = resp.text.strip()
         print(f"🔄 [Query Rewriting]: '{original_query}' -> '{improved_query}'")
         return improved_query
     except Exception as e:
-        print(f"⚠️ Query Rewriting Error: {e}")
+        print(f"⚠️ DeepSeek Query Rewriting Error: {e}")
         return original_query
 
 # ===============================
@@ -125,6 +167,9 @@ def rewrite_query(original_query: str) -> str:
 def search_menu(query: str, n_results: int = 3):
     if not is_food_related(query):
         return []
+
+    provider = _resolve_embedding_provider()
+    collection = _get_collection(provider)
 
     if collection.count() == 0:
         load_and_embed_menus()
@@ -152,4 +197,4 @@ def search_menu(query: str, n_results: int = 3):
 
 if __name__ == "__main__":
     print("✅ เริ่มทดสอบ Vector Store (ChromaDB)")
-    load_and_embed_menus()
+    ensure_vector_store()
