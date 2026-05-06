@@ -4,356 +4,456 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NongHiwKhaow - คิดเมนูอาหาร</title>
+    <title>น้องหิวข้าว</title>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Kanit', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body {
             font-family: 'Kanit', sans-serif;
-            background-color: #f8fafc;
+            background-color: #ffffff;
+            color: #334155;
         }
 
         .hero-bg {
-            background-image: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1559314809-0d155014e29e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+            background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1559314809-0d155014e29e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
             background-size: cover;
             background-position: center;
         }
 
-        .chip-checkbox:checked+label {
-            background-color: #ea580c;
-            /* orange-600 */
-            color: white;
-            border-color: #ea580c;
-            box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3);
-        }
-
-        .radio-custom:checked+label {
-            background-color: #ea580c;
-            color: white;
-            border-color: #ea580c;
-            box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3);
-        }
-
-        /* Hide native checkbox/radio */
+        /* Custom Checkbox/Radio */
         input[type="checkbox"],
         input[type="radio"] {
             display: none;
         }
 
-        .form-card {
+        .icon-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem 0.5rem;
             background: #ffffff;
-            border-radius: 16px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.02);
-            border: 1px solid #f1f5f9;
+            border: 2px solid #f1f5f9;
+            border-radius: 1rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            color: #64748b;
         }
+
+        .icon-card svg {
+            width: 2rem;
+            height: 2rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.2s ease;
+        }
+
+        input:checked+.icon-card {
+            border-color: #f97316;
+            background-color: #fff7ed;
+            color: #ea580c;
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.15);
+            transform: translateY(-2px);
+        }
+
+        input:checked+.icon-card svg {
+            transform: scale(1.1);
+        }
+
+        .icon-card:hover {
+            border-color: #fdba74;
+            color: #f97316;
+        }
+
+        .pill-btn {
+            display: block;
+            text-align: center;
+            padding: 0.75rem 1.5rem;
+            background: #ffffff;
+            border: 2px solid #e2e8f0;
+            border-radius: 9999px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            color: #64748b;
+        }
+
+        input:checked+.pill-btn {
+            background-color: #f97316;
+            border-color: #f97316;
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(249, 115, 22, 0.2);
+        }
+
+        .pill-btn:hover {
+            border-color: #f97316;
+            color: #f97316;
+        }
+        
+        input:checked+.pill-btn:hover {
+            color: #ffffff;
+        }
+
+        .custom-input {
+            width: 100%;
+            padding: 1rem 1.5rem;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 1rem;
+            font-family: inherit;
+            color: #334155;
+            transition: all 0.3s ease;
+        }
+
+        .custom-input:focus {
+            outline: none;
+            border-color: #f97316;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.1);
+        }
+
+        .floating-chat {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 50;
+            background: white;
+            color: #ea580c;
+            padding: 0.5rem 1.2rem;
+            border-radius: 9999px;
+            font-weight: 600;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            border: 1px solid #fed7aa;
+        }
+
+        .floating-chat:hover {
+            transform: scale(1.05);
+            background: #fff7ed;
+        }
+
+        /* Markdown Styles for output */
+        .prose-result p { margin-bottom: 0.8em; }
+        .prose-result h3, .prose-result h4 { color: #ea580c; font-weight: 600; margin-top: 1em; margin-bottom: 0.5em; }
+        .prose-result ul { list-style-type: disc; padding-left: 1.5em; margin-bottom: 1em; }
+        .prose-result strong { color: #c2410c; }
     </style>
 </head>
 
-<body class="min-h-screen flex flex-col md:flex-row relative">
+<body class="flex flex-col md:flex-row h-screen overflow-hidden">
 
-    <!-- Floating Chat Button -->
-    <a href="/chat"
-        class="fixed top-6 right-6 z-50 bg-white text-orange-600 border border-orange-200 shadow-md hover:shadow-lg hover:bg-orange-50 font-medium py-2.5 px-5 rounded-full flex items-center gap-2 transition-all transform hover:scale-105">
+    <a href="/chat" class="floating-chat">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-            <path fill-rule="evenodd"
-                d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z"
-                clip-rule="evenodd" />
+            <path fill-rule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clip-rule="evenodd" />
         </svg>
-        คุยกับแชทบอท
+        โหมดแชทอิสระ
     </a>
 
     <!-- Left Hero Section -->
-    <div class="md:w-5/12 hero-bg text-white flex flex-col justify-center p-10 lg:p-16 relative">
+    <div class="md:w-5/12 h-64 md:h-full hero-bg relative flex flex-col justify-end md:justify-center p-8 md:p-12 lg:p-16 text-white shrink-0">
         <div class="relative z-10">
-            <div
-                class="inline-block px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-sm font-medium mb-6">
-                NongHiwKhaow Assistant
+            <div class="inline-block px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-sm font-semibold mb-6 tracking-wide shadow-lg">
+                น้องหิวข้าว AI Assistant 🍲
             </div>
-            <h1 class="text-5xl lg:text-6xl font-bold mb-4 leading-tight">วันนี้<br><span
-                    class="text-orange-400">กินอะไรดี?</span></h1>
-            <p class="text-lg lg:text-xl text-gray-200 mb-8 max-w-md font-light">
-                ให้น้องหิวข้าวช่วยคิดเมนูอาหารที่ใช่สำหรับคุณ เพียงเลือกวัตถุดิบที่คุณต้องการ
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 leading-tight drop-shadow-lg">
+                วันนี้<br><span class="text-primary-500">กินอะไรดี?</span>
+            </h1>
+            <p class="text-lg text-gray-200 max-w-sm drop-shadow-md hidden md:block">
+                ให้ผู้ช่วย AI ของเราช่วยคิดเมนูอาหารตามสั่งที่ใช่สำหรับคุณ เพียงเลือกสิ่งที่คุณต้องการด้านขวามือ
             </p>
         </div>
     </div>
 
     <!-- Right Form Section -->
-    <div class="md:w-7/12 bg-white flex flex-col justify-center p-8 lg:p-16 overflow-y-auto">
-        <div class="max-w-2xl w-full mx-auto">
-            <h2 class="text-3xl font-semibold text-gray-800 mb-2">เลือกความต้องการของคุณ</h2>
-            <p class="text-gray-500 mb-8 font-light">ปรับแต่งเมนูตามใจชอบ แล้วเราจะแนะนำสิ่งที่ดีที่สุดให้</p>
+    <div class="md:w-7/12 h-full bg-white overflow-y-auto">
+        <div class="p-6 md:p-12 lg:p-16 max-w-3xl mx-auto">
+            
+            <div class="mb-10 text-center md:text-left">
+                <h2 class="text-3xl font-bold text-slate-800 mb-2">เลือกความต้องการของคุณ</h2>
+                <p class="text-slate-500">ปรับแต่งเมนูตามใจชอบ แล้วเราจะแนะนำสิ่งที่ดีที่สุดให้</p>
+            </div>
 
-            <form id="food-form" class="space-y-6">
+            <form id="food-form" class="space-y-10">
 
-                <!-- Category -->
-                <div class="form-card">
-                    <label class="block text-lg font-medium text-gray-800 mb-4">1. ประเภทเมนู</label>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <!-- Categories -->
+                <div>
+                    <label class="block text-lg font-semibold text-slate-800 mb-4">1. อยากกินแนวไหน? 🍳</label>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                         <div>
-                            <input type="radio" id="cat-any" name="category" value="คิดไม่ออก" class="radio-custom"
-                                checked>
-                            <label for="cat-any"
-                                class="block text-center px-4 py-3 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">คิดไม่ออก</label>
+                            <input type="radio" id="cat-any" name="category" value="คิดไม่ออก" checked>
+                            <label for="cat-any" class="pill-btn">คิดไม่ออก 🤔</label>
                         </div>
                         <div>
-                            <input type="radio" id="cat-stir" name="category" value="ผัด" class="radio-custom">
-                            <label for="cat-stir"
-                                class="block text-center px-4 py-3 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ผัด</label>
+                            <input type="radio" id="cat-stir" name="category" value="ผัด">
+                            <label for="cat-stir" class="pill-btn">ผัด 🪕</label>
                         </div>
                         <div>
-                            <input type="radio" id="cat-friedrice" name="category" value="ข้าวผัด" class="radio-custom">
-                            <label for="cat-friedrice"
-                                class="block text-center px-4 py-3 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ข้าวผัด</label>
+                            <input type="radio" id="cat-boiled" name="category" value="ต้ม">
+                            <label for="cat-boiled" class="pill-btn">ต้ม/ซุป 🥣</label>
                         </div>
                         <div>
-                            <input type="radio" id="cat-fried" name="category" value="ทอด" class="radio-custom">
-                            <label for="cat-fried"
-                                class="block text-center px-4 py-3 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ทอด</label>
-                        </div>
-                        <div>
-                            <input type="radio" id="cat-boiled" name="category" value="ต้ม" class="radio-custom">
-                            <label for="cat-boiled"
-                                class="block text-center px-4 py-3 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ต้ม</label>
-                        </div>
-                        <div>
-                            <input type="radio" id="cat-curry" name="category" value="แกง" class="radio-custom">
-                            <label for="cat-curry"
-                                class="block text-center px-4 py-3 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">แกง</label>
+                            <input type="radio" id="cat-fried" name="category" value="ทอด">
+                            <label for="cat-fried" class="pill-btn">ทอด 🍗</label>
                         </div>
                     </div>
                 </div>
 
                 <!-- Ingredients -->
-                <div class="form-card">
-                    <label class="block text-lg font-medium text-gray-800 mb-4">2. เลือกวัตถุดิบหลัก <span
-                            class="text-sm font-normal text-gray-400 ml-2">(เลือกได้หลายอย่าง)</span></label>
-                    <div class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                <div>
+                    <label class="flex items-baseline gap-2 text-lg font-semibold text-slate-800 mb-4">
+                        2. เลือกวัตถุดิบหลัก 🥩 <span class="text-sm font-normal text-slate-400">(เลือกได้หลายอย่าง)</span>
+                    </label>
+                    <div class="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        
+                        <!-- Pork -->
                         <div>
-                            <input type="checkbox" id="ing-pork" name="ingredients" value="หมู" class="chip-checkbox">
-                            <label for="ing-pork"
-                                class="block text-center px-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">หมู</label>
+                            <input type="checkbox" id="ing-pork" name="ingredients" value="หมู">
+                            <label for="ing-pork" class="icon-card">
+                                <span class="text-3xl mb-2">🐷</span>
+                                <span class="font-medium">หมู</span>
+                            </label>
                         </div>
+
+                        <!-- Chicken -->
                         <div>
-                            <input type="checkbox" id="ing-chicken" name="ingredients" value="ไก่"
-                                class="chip-checkbox">
-                            <label for="ing-chicken"
-                                class="block text-center px-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ไก่</label>
+                            <input type="checkbox" id="ing-chicken" name="ingredients" value="ไก่">
+                            <label for="ing-chicken" class="icon-card">
+                                <span class="text-3xl mb-2">🐔</span>
+                                <span class="font-medium">ไก่</span>
+                            </label>
                         </div>
+
+                        <!-- Beef -->
                         <div>
-                            <input type="checkbox" id="ing-shrimp" name="ingredients" value="กุ้ง"
-                                class="chip-checkbox">
-                            <label for="ing-shrimp"
-                                class="block text-center px-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">กุ้ง</label>
+                            <input type="checkbox" id="ing-beef" name="ingredients" value="เนื้อ">
+                            <label for="ing-beef" class="icon-card">
+                                <span class="text-3xl mb-2">🥩</span>
+                                <span class="font-medium">เนื้อ</span>
+                            </label>
                         </div>
+
+                        <!-- Seafood -->
                         <div>
-                            <input type="checkbox" id="ing-crab" name="ingredients" value="ปู" class="chip-checkbox">
-                            <label for="ing-crab"
-                                class="block text-center px-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ปู</label>
+                            <input type="checkbox" id="ing-seafood" name="ingredients" value="ทะเล">
+                            <label for="ing-seafood" class="icon-card">
+                                <span class="text-3xl mb-2">🦐</span>
+                                <span class="font-medium">ทะเล</span>
+                            </label>
                         </div>
+
+                        <!-- Egg -->
                         <div>
-                            <input type="checkbox" id="ing-fish" name="ingredients" value="ปลา" class="chip-checkbox">
-                            <label for="ing-fish"
-                                class="block text-center px-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ปลา</label>
+                            <input type="checkbox" id="ing-egg" name="ingredients" value="ไข่">
+                            <label for="ing-egg" class="icon-card">
+                                <span class="text-3xl mb-2">🥚</span>
+                                <span class="font-medium">ไข่</span>
+                            </label>
                         </div>
-                        <div>
-                            <input type="checkbox" id="ing-egg" name="ingredients" value="ไข่" class="chip-checkbox">
-                            <label for="ing-egg"
-                                class="block text-center px-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ไข่</label>
-                        </div>
-                        <div>
-                            <input type="checkbox" id="ing-beef" name="ingredients" value="เนื้อ" class="chip-checkbox">
-                            <label for="ing-beef"
-                                class="block text-center px-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">เนื้อ</label>
-                        </div>
-                        <div>
-                            <input type="checkbox" id="ing-seafood" name="ingredients" value="ทะเล"
-                                class="chip-checkbox">
-                            <label for="ing-seafood"
-                                class="block text-center px-2 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium">ทะเล</label>
-                        </div>
+
                     </div>
                 </div>
 
-                <!-- Vegetables & Allergy row -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    <!-- Vegetables -->
-                    <div class="form-card">
-                        <label class="block text-lg font-medium text-gray-800 mb-4">3. ใส่ผักหรือไม่?</label>
-                        <div class="flex flex-col gap-3">
-                            <div class="flex-1">
-                                <input type="radio" id="veg-yes" name="vegetables" value="กินผัก" class="radio-custom"
-                                    checked>
-                                <label for="veg-yes"
-                                    class="block text-center px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium w-full">ใส่ผัก</label>
+                <!-- Veggies & Allergies -->
+                <div class="grid md:grid-cols-2 gap-8">
+                    <!-- Veggies -->
+                    <div>
+                        <label class="block text-lg font-semibold text-slate-800 mb-4">3. ใส่ผักหรือไม่? 🥬</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <input type="radio" id="veg-yes" name="vegetables" value="ใส่ผัก" checked>
+                                <label for="veg-yes" class="pill-btn">ใส่ผัก</label>
                             </div>
-                            <div class="flex-1">
-                                <input type="radio" id="veg-no" name="vegetables" value="ไม่กินผัก"
-                                    class="radio-custom">
-                                <label for="veg-no"
-                                    class="block text-center px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 cursor-pointer transition-all hover:bg-orange-50 hover:border-orange-200 font-medium w-full">ไม่ใส่ผัก</label>
+                            <div>
+                                <input type="radio" id="veg-no" name="vegetables" value="ไม่ใส่ผัก">
+                                <label for="veg-no" class="pill-btn">ไม่ใส่ผัก</label>
                             </div>
                         </div>
                     </div>
 
                     <!-- Allergy -->
-                    <div class="form-card flex flex-col justify-between">
-                        <label for="allergy" class="block text-lg font-medium text-gray-800 mb-4">4.
-                            แพ้/ไม่ทานอะไร</label>
-                        <textarea id="allergy" name="allergy" placeholder="เช่น ถั่วลิสง, เผ็ดน้อย..." rows="2"
-                            class="w-full h-full px-4 py-3 rounded-xl border border-gray-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none transition-all text-gray-700 placeholder-gray-400 font-light resize-none"></textarea>
+                    <div>
+                        <label class="block text-lg font-semibold text-slate-800 mb-4">4. อาหารที่แพ้ / ไม่ทาน 🚫</label>
+                        <input type="text" id="allergy" name="allergy" placeholder="เช่น ถั่วลิสง, เผ็ดน้อย, ไม่ชูรส..." class="custom-input">
                     </div>
                 </div>
 
                 <!-- Submit Button -->
-                <div class="pt-6">
-                    <button type="submit"
-                        class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-4 px-8 rounded-xl shadow-[0_8px_20px_-6px_rgba(249,115,22,0.6)] hover:shadow-[0_12px_25px_-6px_rgba(249,115,22,0.7)] transition-all transform hover:-translate-y-1 text-lg flex justify-center items-center gap-2">
+                <div class="pt-4">
+                    <button type="submit" id="submit-btn" class="w-full bg-primary-500 hover:bg-primary-600 text-white text-xl font-bold py-4 rounded-xl shadow-lg shadow-orange-500/30 transition-all hover:shadow-orange-500/50 hover:-translate-y-1 flex justify-center items-center gap-3">
                         <span>คิดเมนูให้ฉันเลย</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path fill-rule="evenodd"
-                                d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
-                                clip-rule="evenodd" />
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                        </svg>
+                        <!-- Spinner (Hidden by default) -->
+                        <svg id="btn-spinner" class="animate-spin hidden h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                     </button>
                 </div>
             </form>
 
-            <!-- Result Area (hidden by default) -->
-            <div id="result-area"
-                class="hidden mt-8 p-8 bg-orange-50 border border-orange-100 rounded-2xl shadow-inner">
-                <h3 class="text-xl font-semibold text-orange-800 mb-4">ผลลัพธ์จาก AI:</h3>
-                <div class="p-4 bg-white rounded-xl border border-orange-200 shadow-sm mb-4">
-                    <div id="prompt-result"
-                        class="prose prose-orange prose-sm md:prose-base max-w-none text-gray-800 font-medium leading-relaxed">
-                    </div>
+            <!-- Result Area -->
+            <div id="result-area" class="hidden mt-10 p-6 md:p-8 bg-primary-50 border border-primary-100 rounded-2xl shadow-inner relative overflow-hidden transition-all duration-500">
+                <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-32 w-32 text-primary-500" fill="currentColor" viewBox="0 0 24 24"><path d="M11 2v20c-5.07-.5-9-4.79-9-10s3.93-9.5 9-10zm2 0v20c5.07-.5 9-4.79 9-10s-3.93-9.5-9-10z"/></svg>
+                </div>
+                
+                <h3 class="text-2xl font-bold text-primary-700 mb-6 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                    เมนูแนะนำสำหรับคุณ
+                </h3>
+                
+                <div class="bg-white rounded-xl p-6 shadow-sm border border-orange-100 relative z-10">
+                    <div id="prompt-result" class="prose-result text-slate-700 leading-relaxed text-lg"></div>
                 </div>
 
                 <!-- Agent Logs Section -->
-                <div>
-                    <button type="button" id="toggle-logs-btn"
-                        class="flex items-center gap-2 text-sm text-gray-500 hover:text-orange-600 transition-colors mb-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                        </svg>
-                        ดูเบื้องหลังการคิดของ AI
-                    </button>
-                    <div id="logs-container" class="hidden">
-                        <pre id="agent-logs"
-                            class="text-xs text-green-400 bg-gray-900 p-4 rounded-xl overflow-auto whitespace-pre-wrap max-h-64 font-mono shadow-inner border border-gray-800"></pre>
+                <div class="mt-6 border-t border-orange-200 pt-4 flex flex-col items-start gap-4">
+                    <div class="flex items-center justify-between w-full">
+                        <button type="button" id="toggle-logs-btn" class="flex items-center gap-2 text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors bg-white px-3 py-1.5 rounded-lg border border-primary-200 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                            </svg>
+                            ดูเบื้องหลังการคิดของ AI
+                        </button>
+                        
+                        <button id="reset-btn" class="text-slate-500 hover:text-primary-600 font-medium flex items-center gap-1 transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" />
+                            </svg>
+                            เลือกใหม่
+                        </button>
+                    </div>
+
+                    <div id="logs-container" class="hidden w-full relative z-10">
+                        <pre id="agent-logs" class="text-xs text-emerald-400 bg-slate-900 p-4 rounded-xl overflow-auto whitespace-pre-wrap max-h-64 font-mono shadow-inner border border-slate-800"></pre>
                     </div>
                 </div>
-
-                <button id="reset-btn"
-                    class="mt-6 text-orange-600 hover:text-orange-800 font-medium underline flex items-center gap-1 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd"
-                            d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z"
-                            clip-rule="evenodd" />
-                    </svg>
-                    กลับไปเลือกใหม่
-                </button>
             </div>
+
         </div>
     </div>
 
     <script>
-        let currentSessionId = null;
+        let currentSessionId = localStorage.getItem('foodie_session_id');
 
         document.getElementById('food-form').addEventListener('submit', async function (e) {
             e.preventDefault();
 
-            // Get selected category
+            const submitBtn = document.getElementById('submit-btn');
+            const spinner = document.getElementById('btn-spinner');
+            const btnText = submitBtn.querySelector('span');
+            const btnIcon = submitBtn.querySelector('svg:not(#btn-spinner)');
+            const resultArea = document.getElementById('result-area');
+            const promptResult = document.getElementById('prompt-result');
+            const logsContainer = document.getElementById('logs-container');
+            const agentLogs = document.getElementById('agent-logs');
+
+            // Collect data
             const category = document.querySelector('input[name="category"]:checked').value;
-
-            // Get selected ingredients
-            const ingredients = [];
-            document.querySelectorAll('input[name="ingredients"]:checked').forEach((checkbox) => {
-                ingredients.push(checkbox.value);
-            });
-
-            // Get vegetable preference
+            const ingredients = Array.from(document.querySelectorAll('input[name="ingredients"]:checked')).map(cb => cb.value);
             const vegetables = document.querySelector('input[name="vegetables"]:checked').value;
-
-            // Get allergy
             const allergy = document.getElementById('allergy').value.trim();
 
-            // Generate prompt
-            let promptText = "ช่วยแนะนำเมนูอาหารมาให้ 3 อย่างพร้อมบอกแคลอรี่และส่วนผสมหลักของแต่ละเมนูด้วยครับ ";
+            let promptText = `ช่วยแนะนำเมนูอาหารมาให้ 3 อย่าง `;
+            if (category !== "คิดไม่ออก") promptText += `ขอเป็นประเภท ${category} `;
+            if (ingredients.length > 0) promptText += `ใส่วัตถุดิบ ${ingredients.join(", ")} `;
+            promptText += vegetables === "ใส่ผัก" ? "" : " และไม่เอาผัก";
+            if (allergy) promptText += ` ระวังข้อจำกัดนี้ด้วย: ${allergy}`;
 
-            if (category !== "คิดไม่ออก") {
-                promptText += "ขอเป็นประเภท '" + category + "' ";
-            }
-
-            if (ingredients.length > 0) {
-                promptText += "อยากกินวัตถุดิบเป็น " + ingredients.join(", ") + " ";
-            } else {
-                promptText += "เอาวัตถุดิบอะไรก็ได้ ";
-            }
-
-            promptText += "แบบ" + vegetables;
-
-            if (allergy) {
-                promptText += " และขอไม่ใส่/แพ้ " + allergy;
-            }
-
-            const submitBtn = document.querySelector('button[type="submit"]');
-            const originalBtnHtml = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<span class="animate-pulse">กำลังคิดเมนูให้คุณ...</span>';
+            // UI State
             submitBtn.disabled = true;
+            btnText.textContent = "กำลังประมวลผล...";
+            btnIcon.classList.add('hidden');
+            spinner.classList.remove('hidden');
+            
+            resultArea.classList.remove('hidden');
+            logsContainer.classList.add('hidden');
+            promptResult.innerHTML = `
+                <div class="flex items-center justify-center py-8">
+                    <div class="animate-pulse flex flex-col items-center gap-3">
+                        <div class="w-12 h-12 rounded-full bg-primary-200 flex items-center justify-center">
+                            <div class="w-6 h-6 rounded-full bg-primary-500 animate-ping"></div>
+                        </div>
+                        <p class="text-primary-600 font-medium">น้องหิวข้าวกำลังคัดสรรเมนูที่ดีที่สุดให้คุณ...</p>
+                    </div>
+                </div>
+            `;
+
+            // Scroll to result smoothly
+            setTimeout(() => {
+                resultArea.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
 
             try {
+                if (!currentSessionId) {
+                    currentSessionId = "session_" + Math.random().toString(36).substring(2, 9);
+                    localStorage.setItem('foodie_session_id', currentSessionId);
+                }
 
                 const response = await fetch('/api/chat', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        message: promptText,
-                        session_id: currentSessionId
-                    })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: promptText, session_id: currentSessionId })
                 });
 
                 const data = await response.json();
-                currentSessionId = data.session_id;
-
-                document.getElementById('food-form').classList.add('hidden');
-                document.getElementById('result-area').classList.remove('hidden');
-
-                document.getElementById('prompt-result').innerHTML = marked.parse(data.answer);
-
-                document.getElementById('agent-logs').textContent = data.logs || "ไม่พบข้อมูลเบื้องหลัง...";
-
+                
+                if (data.answer) {
+                    promptResult.innerHTML = marked.parse(data.answer);
+                    if (data.logs) {
+                        agentLogs.textContent = data.logs;
+                    } else {
+                        agentLogs.textContent = "ไม่มี log แจ้งเตือนจากระบบ";
+                    }
+                } else {
+                    promptResult.innerHTML = `<p class="text-red-500 font-medium">เกิดข้อผิดพลาด: ${data.error || 'ไม่สามารถดึงข้อมูลได้'}</p>`;
+                }
             } catch (error) {
-                console.error("Error calling API:", error);
-                alert("เกิดข้อผิดพลาดในการเชื่อมต่อกับ AI กรุณาลองใหม่อีกครั้ง");
+                promptResult.innerHTML = `<p class="text-red-500 font-medium">เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์</p>`;
+                console.error(error);
             } finally {
-
-                submitBtn.innerHTML = originalBtnHtml;
                 submitBtn.disabled = false;
+                btnText.textContent = "คิดเมนูให้ฉันเลย";
+                btnIcon.classList.remove('hidden');
+                spinner.classList.add('hidden');
             }
         });
 
-        // Toggle logs
-        document.getElementById('toggle-logs-btn').addEventListener('click', function () {
+        document.getElementById('toggle-logs-btn').addEventListener('click', function() {
             const logsContainer = document.getElementById('logs-container');
-            if (logsContainer.classList.contains('hidden')) {
-                logsContainer.classList.remove('hidden');
-            } else {
-                logsContainer.classList.add('hidden');
-            }
+            logsContainer.classList.toggle('hidden');
         });
 
-        document.getElementById('reset-btn').addEventListener('click', function () {
-            document.getElementById('food-form').classList.remove('hidden');
+        document.getElementById('reset-btn').addEventListener('click', function() {
             document.getElementById('result-area').classList.add('hidden');
-            document.getElementById('logs-container').classList.add('hidden');
+            document.getElementById('food-form').reset();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     </script>
 </body>
-
 </html>

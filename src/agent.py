@@ -21,12 +21,12 @@ from langgraph.graph import END, START, StateGraph
 
 # Relative imports
 try:
-    from .database import load_menus
+    from .database import menu_repository
     from .llm import DEEPSEEK_MODEL, generate_text
     from .retrieval import search_menu
     from .tools import filter_menu, get_dish_detail, get_menu_by_tag
 except ImportError:
-    from database import load_menus
+    from database import menu_repository
     from llm import DEEPSEEK_MODEL, generate_text
     from retrieval import search_menu
     from tools import filter_menu, get_dish_detail, get_menu_by_tag
@@ -56,30 +56,6 @@ Context Layer:
 - ถ้าผู้ใช้มีข้อจำกัด เช่น งบประมาณ แคลอรี่ แพ้อาหาร หรือไม่กินวัตถุดิบบางอย่าง ต้องเคารพข้อจำกัดนั้นก่อนความอร่อย
 - ถ้าผู้ใช้ถามต่อเนื่อง เช่น "แล้วมีอย่างอื่นไหม" ให้ใช้ประวัติสนทนาเพื่อเข้าใจบริบทเดิม
 - ก่อนตอบสุดท้าย ให้ตรวจคำตอบตัวเองว่ามีหลักฐานจาก tool หรือไม่ ถ้าไม่แน่ใจให้ตอบอย่างสุภาพว่าไม่พบข้อมูลชัดเจน
-"""
-)
-
-ANSWER_GUARD_PROMPT = PromptTemplate.from_template(
-    """
-คุณคือ Foodie Fact Checker ตรวจคำตอบก่อนส่งให้ผู้ใช้
-
-คำถามผู้ใช้:
-{query}
-
-หลักฐานจาก tools:
-{evidence}
-
-คำตอบร่าง:
-{answer}
-
-กฎตรวจสอบ:
-- ถ้าคำตอบร่างพูดถึงชื่อเมนู ราคา แคลอรี่ วัตถุดิบ แท็ก หรือสารก่อภูมิแพ้ที่ไม่มีในหลักฐาน ให้แก้คำตอบ
-- ถ้าหลักฐานว่างหรือไม่พอ ให้ตอบสุภาพว่าไม่พบข้อมูลพอ และแนะนำให้ผู้ใช้ระบุเงื่อนไขเพิ่ม
-- ห้ามเพิ่มเมนูหรือข้อมูลใหม่ที่ไม่มีในหลักฐาน
-- คงน้ำเสียงเป็นกันเองแบบ "น้องหิวข้าว"
-
-ตอบเป็น JSON เท่านั้น:
-{{"supported": true, "answer": "คำตอบสุดท้าย"}}
 """
 )
 
@@ -225,9 +201,9 @@ LANGCHAIN_TOOL_MAP = {item.name: item for item in LANGCHAIN_TOOLS}
 def _fallback_answer(query, context):
     if isinstance(context, dict):
         return (
-            f"ได้เลยค่ะ เมนูที่ตรงที่สุดคือ {context['name']} 🍽️\n"
-            f"ราคา {context['price']} บาท ประมาณ {context['calories']} kcal\n"
-            f"{context['description']}"
+            f"ได้เลยค่ะ เมนูที่ตรงที่สุดคือ {context.get('name')} 🍽️\n"
+            f"ราคา {context.get('price')} บาท ประมาณ {context.get('calories')} kcal\n"
+            f"{context.get('description')}"
         )
 
     if isinstance(context, list) and context:
@@ -235,7 +211,7 @@ def _fallback_answer(query, context):
         lines = "\n".join(_format_menu_line(menu) for menu in menus)
         return f"แนะนำเมนูที่น่าจะตรงกับ “{query}” ค่ะ 🍜\n{lines}"
 
-    fallback_menus = load_menus()[:3]
+    fallback_menus = menu_repository.get_all()[:3]
     lines = "\n".join(_format_menu_line(menu) for menu in fallback_menus)
     return f"ตอนนี้ยังไม่เจอเมนูที่ตรงมาก ๆ แต่ลองดูเมนูยอดนิยมเหล่านี้ก่อนได้ค่ะ\n{lines}"
 
@@ -249,7 +225,7 @@ def _extract_max_number(query, suffixes):
 
 
 def _local_router(user_query):
-    menus = load_menus()
+    menus = menu_repository.get_all()
 
     for menu in menus:
         if menu["name"] in user_query:
@@ -376,26 +352,6 @@ def _parse_json_object(text: str) -> dict:
         raise
 
 
-def _guard_answer(query: str, answer: str, evidence: str) -> str:
-    if not answer:
-        return "ขออภัยค่ะ ตอนนี้ยังสรุปคำตอบไม่ได้ ลองระบุเมนูหรืองบประมาณเพิ่มอีกนิดนะคะ"
-
-    try:
-        guard_text = generate_text(
-            ANSWER_GUARD_PROMPT.format(
-                query=query,
-                evidence=evidence or "ไม่มีหลักฐานจาก tool",
-                answer=answer,
-            ),
-            response_format={"type": "json_object"},
-        )
-        checked = _parse_json_object(guard_text)
-        return checked.get("answer") or answer
-    except Exception as e:
-        print(f"⚠️ Answer Guard Error: {e}. ใช้คำตอบจาก agent โดยตรง.")
-        return answer
-
-
 def _router_node(state: FoodieAgentState) -> FoodieAgentState:
     prompt = ROUTER_PROMPT_TEMPLATE.format(
         system_prompt=state["system_prompt"],
@@ -428,25 +384,6 @@ def _tool_node(state: FoodieAgentState) -> FoodieAgentState:
     return {"observation": observation}
 
 
-def _answer_node(state: FoodieAgentState) -> FoodieAgentState:
-    prompt = FINAL_ANSWER_PROMPT.format(
-        system_prompt=state["system_prompt"],
-        query=state["query"],
-        observation=state.get("observation") or "ไม่พบข้อมูล",
-    )
-    answer = generate_text(prompt)
-    return {"answer": answer}
-
-
-def _guard_node(state: FoodieAgentState) -> FoodieAgentState:
-    final_answer = _guard_answer(
-        query=state["query"],
-        answer=state.get("answer") or "",
-        evidence=state.get("observation") or "",
-    )
-    return {"final_answer": final_answer}
-
-
 def _get_agent_graph():
     global _AGENT_GRAPH
     if _AGENT_GRAPH is None:
@@ -455,18 +392,14 @@ def _get_agent_graph():
             graph = StateGraph(FoodieAgentState)
             graph.add_node("router", _router_node)
             graph.add_node("tool", _tool_node)
-            graph.add_node("answer", _answer_node)
-            graph.add_node("guard", _guard_node)
             graph.add_edge(START, "router")
             graph.add_edge("router", "tool")
-            graph.add_edge("tool", "answer")
-            graph.add_edge("answer", "guard")
-            graph.add_edge("guard", END)
+            graph.add_edge("tool", END)
             _AGENT_GRAPH = graph.compile()
     return _AGENT_GRAPH
 
 
-def _run_langgraph_agent(user_query: str, memory: ConversationBufferMemory) -> tuple[str, str]:
+def _run_langgraph_agent(user_query: str, memory: ConversationBufferMemory) -> str:
     system_prompt = _build_system_prompt(memory)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
@@ -474,15 +407,16 @@ def _run_langgraph_agent(user_query: str, memory: ConversationBufferMemory) -> t
             "query": user_query,
             "system_prompt": system_prompt,
         })
-    return result.get("final_answer") or result.get("answer") or "", result.get("observation") or ""
+    return result.get("observation") or ""
 
 
-def generate_answer(query, context):
+def generate_answer_stream(query, context):
     """
-    สร้างคำตอบแบบเป็นธรรมชาติจาก Context ที่ได้ (Wow ⭐)
+    สร้างคำตอบแบบเป็นธรรมชาติจาก Context ที่ได้ (Wow ⭐) รองรับ Streaming
     """
     if context is None or context == []:
-        return _fallback_answer(query, context)
+        yield _fallback_answer(query, context)
+        return
 
     prompt = (
         f"คุณคือ 'น้องหิวข้าว' AI Agent ผู้เชี่ยวชาญด้านอาหารตามสั่ง\n"
@@ -496,12 +430,14 @@ def generate_answer(query, context):
     )
     
     try:
-        return generate_text(prompt)
+        from .llm import generate_text_stream
+        for chunk in generate_text_stream(prompt):
+            yield chunk
     except Exception as e:
         print(f"⚠️ Answer Generation Error: {e}. ใช้คำตอบแบบ local fallback.")
-        return _fallback_answer(query, context)
+        yield _fallback_answer(query, context)
 
-def _run_local_agent(user_query: str) -> str:
+def _run_local_agent_stream(user_query: str):
     plan = _local_router(user_query)
     print(f"🤔 [Thought]: {plan['thought']}")
 
@@ -515,27 +451,47 @@ def _run_local_agent(user_query: str) -> str:
         observation = "ไม่พบเครื่องมือที่เหมาะสม"
 
     print(f"👁️ [Observation]: พบข้อมูล {len(observation) if isinstance(observation, list) else '1'} รายการ")
-    return generate_answer(user_query, observation)
+    for chunk in generate_answer_stream(user_query, observation):
+        yield chunk
 
-
-def foodie_agent(user_query, session_id: str = "default"):
+def foodie_agent_stream(user_query, session_id: str = "default"):
     """
-    Main LangChain Agent Loop with memory, prompt context, tools, and hallucination guard.
+    Main Streaming LangChain Agent Loop with memory and tools.
     """
     print(f"\n[User]: {user_query}")
     print(f"🤖 [Model]: {DEEPSEEK_MODEL}")
 
     memory = get_memory(session_id)
+    system_prompt = _build_system_prompt(memory)
     try:
-        final_answer, evidence = _run_langgraph_agent(user_query, memory)
+        observation = _run_langgraph_agent(user_query, memory)
         print(f"🧠 [Memory]: ใช้ ConversationBufferMemory session={session_id}")
-        print(f"🛡️ [Guard]: ตรวจคำตอบด้วย hallucination guard")
+        prompt = FINAL_ANSWER_PROMPT.format(
+            system_prompt=system_prompt,
+            query=user_query,
+            observation=observation,
+        )
+        from .llm import generate_text_stream
+        
+        full_answer = ""
+        for chunk in generate_text_stream(prompt):
+            full_answer += chunk
+            yield chunk
+            
     except Exception as e:
         print(f"⚠️ LangGraph Agent Error: {e}. ใช้ local fallback แทน.")
-        final_answer = _run_local_agent(user_query)
+        full_answer = ""
+        for chunk in _run_local_agent_stream(user_query):
+            full_answer += chunk
+            yield chunk
 
-    memory.save_context({"input": user_query}, {"output": final_answer})
-    return final_answer
+    memory.save_context({"input": user_query}, {"output": full_answer})
+
+def foodie_agent(user_query, session_id: str = "default") -> str:
+    """
+    Synchronous wrapper for foodie_agent_stream
+    """
+    return "".join(list(foodie_agent_stream(user_query, session_id)))
 
 if __name__ == "__main__":
     while True:
@@ -543,5 +499,8 @@ if __name__ == "__main__":
         if query.lower() == 'exit':
             break
         
-        answer = foodie_agent(query)
-        print(f"\n[Agent]: {answer}")
+        # We can test streaming in the CLI easily!
+        print("\n[Agent]: ", end="", flush=True)
+        for chunk in foodie_agent_stream(query):
+            print(chunk, end="", flush=True)
+        print("\n")

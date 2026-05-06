@@ -5,3 +5,6 @@ gradio
 langchain
 langchain-classic
 langchain-openai
+langchain-google-genai
+langchain-community
+langchain-core

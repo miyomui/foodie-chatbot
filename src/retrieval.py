@@ -6,10 +6,10 @@ import chromadb
 
 # Relative imports
 try:
-    from .database import load_menus
+    from .database import menu_repository
     from .llm import generate_text
 except ImportError:
-    from database import load_menus
+    from database import menu_repository
     from llm import generate_text
 
 # หา Path ของโฟลเดอร์ Root ของโปรเจกต์
@@ -88,7 +88,7 @@ def is_food_related(query):
 # Embed Data into Vector Store
 # ===============================
 def load_and_embed_menus():
-    menus = load_menus()
+    menus = menu_repository.get_all()
     provider = _resolve_embedding_provider()
     collection = _get_collection(provider)
     print(f"เริ่มฝังข้อมูลลง ChromaDB ด้วย {provider} embedding...")
@@ -103,12 +103,12 @@ def load_and_embed_menus():
     for menu in menus:
         text = (
             f"ชื่อเมนู: {menu['name']}\n"
-            f"ประเภท: {menu['category']}\n"
-            f"ราคา: {menu['price']} บาท\n"
-            f"แคลอรี่: {menu['calories']} kcal\n"
-            f"ส่วนผสม: {', '.join(menu['ingredients'])}\n"
-            f"แท็ก: {', '.join(menu['tags'])}\n"
-            f"รายละเอียด: {menu['description']}"
+            f"ประเภท: {menu.get('category', '')}\n"
+            f"ราคา: {menu.get('price', '')} บาท\n"
+            f"แคลอรี่: {menu.get('calories', '')} kcal\n"
+            f"ส่วนผสม: {', '.join(menu.get('ingredients', []))}\n"
+            f"แท็ก: {', '.join(menu.get('tags', []))}\n"
+            f"รายละเอียด: {menu.get('description', '')}"
         )
         
         embedding = embed_text(text)
@@ -116,13 +116,13 @@ def load_and_embed_menus():
             meta = {
                 "id": menu["id"],
                 "name": menu["name"],
-                "category": menu["category"],
-                "price": menu["price"],
-                "calories": menu["calories"],
-                "ingredients": ", ".join(menu["ingredients"]),
-                "allergens": ", ".join(menu["allergens"]) if menu["allergens"] else "ไม่มี",
-                "description": menu["description"],
-                "tags": ", ".join(menu["tags"])
+                "category": menu.get("category", ""),
+                "price": menu.get("price", 0),
+                "calories": menu.get("calories", 0),
+                "ingredients": ", ".join(menu.get("ingredients", [])),
+                "allergens": ", ".join(menu.get("allergens", [])) if menu.get("allergens") else "ไม่มี",
+                "description": menu.get("description", ""),
+                "tags": ", ".join(menu.get("tags", []))
             }
             
             collection.upsert(

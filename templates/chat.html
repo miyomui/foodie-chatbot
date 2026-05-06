@@ -1,268 +1,382 @@
 <!DOCTYPE html>
 <html lang="th">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NongHiwKhaow - AI Chat</title>
+    <title>น้องหิวข้าว</title>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Kanit', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <style>
         body {
             font-family: 'Kanit', sans-serif;
-            background-color: #343541;
-            /* ChatGPT Dark Theme Main */
-            color: #ececf1;
+            background-color: #f8fafc;
+            color: #334155;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
         }
 
-        .sidebar {
-            background-color: #202123;
+        .chat-header {
+            background: white;
+            border-bottom: 2px solid #ffedd5;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.05);
+            z-index: 10;
         }
 
-        .chat-bg {
-            background-color: #343541;
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            scroll-behavior: smooth;
+            background-image: radial-gradient(#ffedd5 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-color: #f8fafc;
         }
 
-        .message-bot {
-            background-color: #444654;
+        .message {
+            display: flex;
+            gap: 1rem;
+            max-w: 85%;
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            transform: translateY(10px);
+            animation: fade-in-up 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
-        .message-user {
-            background-color: #343541;
+        @keyframes fade-in-up {
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .input-bg {
-            background-color: #40414f;
-            border: 1px solid rgba(32, 33, 35, .5);
-            box-shadow: 0 0 15px rgba(0, 0, 0, .1);
+        .message.user {
+            margin-left: auto;
+            flex-direction: row-reverse;
         }
 
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
+        .avatar {
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 1.25rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .message.user .avatar {
+            background: #fff;
+            border: 2px solid #e2e8f0;
+        }
+
+        .message.bot .avatar {
+            background: #f97316;
+            color: white;
+            border: 2px solid #fff;
+            box-shadow: 0 4px 10px rgba(249, 115, 22, 0.3);
+        }
+
+        .message-bubble {
+            padding: 1rem 1.25rem;
+            font-size: 1.05rem;
+            line-height: 1.6;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            position: relative;
+        }
+
+        .message.user .message-bubble {
+            background-color: #f97316;
+            color: white;
+            border-radius: 1.5rem 1.5rem 0 1.5rem;
+        }
+
+        .message.bot .message-bubble {
+            background-color: white;
+            color: #334155;
+            border-radius: 1.5rem 1.5rem 1.5rem 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .input-area {
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            padding: 1rem 2rem;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.02);
+            z-index: 10;
+        }
+
+        .chat-input {
+            width: 100%;
+            background: #f1f5f9;
+            border: 2px solid transparent;
+            padding: 1rem 1.5rem;
+            border-radius: 2rem;
+            font-family: inherit;
+            color: #334155;
+            transition: all 0.3s ease;
+            resize: none;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #fdba74;
+            background: white;
+            box-shadow: 0 4px 15px rgba(249, 115, 22, 0.1);
+        }
+
+        .send-btn {
+            background-color: #f97316;
+            color: white;
+            width: 3.5rem;
+            height: 3.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(249, 115, 22, 0.3);
+        }
+
+        .send-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            background-color: #ea580c;
+        }
+
+        .send-btn:disabled {
+            background-color: #cbd5e1;
+            box-shadow: none;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: inline-flex;
+            gap: 4px;
+            align-items: center;
+            height: 24px;
+            padding: 0 0.5rem;
+        }
+
+        .typing-indicator span {
+            display: block;
             width: 8px;
+            height: 8px;
+            background-color: #cbd5e1;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out both;
         }
 
-        ::-webkit-scrollbar-track {
-            background: transparent;
+        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); background-color: #f97316; }
         }
 
-        ::-webkit-scrollbar-thumb {
-            background: #565869;
-            border-radius: 4px;
+        /* Markdown Styling within Chat */
+        .prose-custom p { margin-bottom: 0.5em; }
+        .prose-custom p:last-child { margin-bottom: 0; }
+        .prose-custom strong { color: #ea580c; font-weight: 600; }
+        .prose-custom ul { list-style-type: disc; padding-left: 1.5em; margin-top: 0.5em; margin-bottom: 0.5em; }
+        .prose-custom li { margin-bottom: 0.25em; }
+        
+        /* Drawer */
+        .log-drawer {
+            position: absolute;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100%;
+            background: #1e293b;
+            color: #f8fafc;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 40;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #334155;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.2);
         }
 
-        ::-webkit-scrollbar-thumb:hover {
-            background: #717284;
+        .log-drawer.open {
+            right: 0;
         }
+
     </style>
 </head>
+<body>
 
-<body class="h-screen flex overflow-hidden selection:bg-orange-500 selection:text-white">
-
-    <!-- Sidebar (Hidden on mobile by default) -->
-    <div class="sidebar w-64 flex-shrink-0 flex-col hidden md:flex h-full border-r border-white/20">
-        <div class="p-4">
-            <button id="new-chat-btn"
-                class="flex items-center gap-3 w-full p-3 rounded-md border border-white/20 hover:bg-gray-800 transition-colors text-sm font-medium">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+    <header class="chat-header">
+        <div class="flex items-center gap-3">
+            <a href="/" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-primary-600 hover:bg-primary-50 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                แชทใหม่
-            </button>
-        </div>
-        <div class="flex-1 overflow-y-auto px-4 py-2">
-            <!-- Chat history list could go here -->
-            <div class="text-xs text-gray-400 font-semibold mb-3 px-2">เมนูการใช้งาน</div>
-            <a href="/"
-                class="flex items-center gap-3 w-full p-3 rounded-md hover:bg-gray-800 transition-colors text-sm text-gray-300">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                กลับไปหน้าหลัก
             </a>
-        </div>
-        <div class="p-4 border-t border-white/20">
-            <div class="flex items-center gap-3 w-full p-2 rounded-md">
-                <div
-                    class="w-8 h-8 rounded-sm bg-orange-500 flex items-center justify-center font-bold text-white shadow-sm">
-                    NH</div>
-                <span class="text-sm font-medium">NongHiwKhaow</span>
+            <div>
+                <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                    น้องหิวข้าว <span class="text-sm px-2 py-0.5 bg-primary-100 text-primary-600 rounded-full">AI Assistant</span>
+                </h1>
+                <p class="text-xs text-slate-500">พร้อมช่วยคุณเลือกเมนูอาหาร 24 ชม.</p>
             </div>
         </div>
-    </div>
+        
+        <button id="toggle-log-btn" class="text-sm font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+            เบื้องหลัง AI
+        </button>
+    </header>
 
     <!-- Main Chat Area -->
-    <div class="flex-1 flex flex-col h-full relative chat-bg">
-
-        <!-- Mobile Header -->
-        <div class="md:hidden flex items-center justify-between p-4 border-b border-white/20 bg-[#343541] z-10">
-            <button class="text-gray-300 hover:text-white">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-            </button>
-            <div class="font-medium">NongHiwKhaow</div>
-            <a href="/" class="text-orange-500 hover:text-orange-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-            </a>
-        </div>
-
+    <div class="flex-1 flex relative overflow-hidden">
+        
         <!-- Chat History -->
-        <div id="chat-container" class="flex-1 overflow-y-auto pb-32">
-            <!-- Welcome Message -->
-            <div class="h-full flex flex-col items-center justify-center text-center p-8" id="empty-state">
-                <div
-                    class="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-orange-500/20">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z" />
-                    </svg>
-                </div>
-                <h2 class="text-3xl font-semibold mb-2">น้องหิวข้าว</h2>
-                <p class="text-gray-400 max-w-md">อยากกินอะไรพิมพ์บอกได้เลยจ้า เดี๋ยวจัดให้!</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-8 w-full max-w-2xl">
-                    <button
-                        class="bg-[#40414f] hover:bg-[#2A2B32] border border-white/10 p-4 rounded-xl text-left transition text-sm text-gray-300"
-                        onclick="document.getElementById('message-input').value='อยากกินอาหารทะเลแซ่บๆ แนะนำหน่อย';">
-                        "อยากกินอาหารทะเลแซ่บๆ แนะนำหน่อย"
-                    </button>
-                    <button
-                        class="bg-[#40414f] hover:bg-[#2A2B32] border border-white/10 p-4 rounded-xl text-left transition text-sm text-gray-300"
-                        onclick="document.getElementById('message-input').value='เมนูหมูที่ไม่เผ็ด สำหรับเด็ก';">
-                        "เมนูหมูที่ไม่เผ็ด สำหรับเด็ก"
-                    </button>
+        <div id="chat-container" class="chat-container">
+            <div class="message bot">
+                <div class="avatar">🤖</div>
+                <div class="message-bubble content prose-custom">
+                    <p>สวัสดีค่ะ <strong>น้องหิวข้าว</strong> ยินดีให้บริการค่ะ 🍽️</p>
+                    <p>วันนี้อยากทานอะไรเป็นพิเศษไหมคะ? บอกวัตถุดิบ รสชาติ หรือข้อจำกัดอย่าง "ไม่ทานเผ็ด" หรือ "ไม่ใส่ผัก" มาได้เลยค่ะ</p>
                 </div>
             </div>
         </div>
 
-        <!-- Input Area -->
-        <div
-            class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-[#343541] via-[#343541] to-transparent pt-10 pb-6 px-4">
-            <div class="max-w-3xl mx-auto relative">
-                <form id="chat-form"
-                    class="relative flex items-end w-full input-bg rounded-xl overflow-hidden py-3 pl-4 pr-12 focus-within:ring-1 focus-within:ring-orange-500/50 transition-all">
-                    <textarea id="message-input" rows="1" placeholder="พิมพ์ข้อความที่นี่..."
-                        class="w-full max-h-48 bg-transparent text-white placeholder-gray-400 border-0 focus:ring-0 resize-none outline-none py-0 m-0"
-                        style="min-height: 24px;"></textarea>
-                    <button type="submit" id="send-btn"
-                        class="absolute right-3 bottom-2.5 p-1.5 rounded-md text-gray-400 hover:bg-[#2A2B32] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                            <path
-                                d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-                        </svg>
-                    </button>
-                </form>
-                <div class="text-center mt-3 text-xs text-gray-500">
-                    NongHiwKhaow สามารถทำผิดพลาดได้ โปรดตรวจสอบความถูกต้องของเมนู
-                </div>
+        <!-- Log Drawer -->
+        <div id="log-drawer" class="log-drawer">
+            <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900">
+                <h3 class="font-bold text-emerald-400 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                    Agent Runtime Logs
+                </h3>
+                <button id="close-log-btn" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="log-content" class="flex-1 overflow-y-auto p-4 font-mono text-xs text-slate-300">
+                <div class="italic text-slate-500">System Ready. Waiting for user input...</div>
             </div>
         </div>
+
     </div>
 
-    <!-- Template for User Message -->
-    <template id="tmpl-user">
-        <div class="w-full message-user text-gray-100 border-b border-black/10">
-            <div class="max-w-3xl mx-auto flex gap-4 p-4 md:py-6 md:px-4 text-base">
-                <div class="w-8 h-8 rounded-sm bg-gray-600 flex-shrink-0 flex items-center justify-center font-bold">U
-                </div>
-                <div class="flex-1 whitespace-pre-wrap message-content"></div>
+    <!-- Input Area -->
+    <div class="input-area">
+        <form id="chat-form" class="max-w-4xl mx-auto flex gap-3 items-end">
+            <div class="flex-1 relative">
+                <textarea 
+                    id="message-input" 
+                    rows="1" 
+                    placeholder="พิมพ์ข้อความ... (เช่น แนะนำเมนูไก่ที่ไม่เผ็ดให้หน่อย)" 
+                    class="chat-input"
+                    autofocus
+                ></textarea>
             </div>
-        </div>
-    </template>
-
-    <!-- Template for Bot Message -->
-    <template id="tmpl-bot">
-        <div class="w-full message-bot text-gray-100 border-b border-black/10">
-            <div class="max-w-3xl mx-auto flex gap-4 p-4 md:py-6 md:px-4 text-base group">
-                <div class="w-8 h-8 rounded-sm bg-orange-500 flex-shrink-0 flex items-center justify-center shadow-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20"
-                        fill="currentColor">
-                        <path fill-rule="evenodd"
-                            d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
-                            clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="flex-1 min-w-0">
-                    <div class="prose prose-invert max-w-none message-content text-gray-200"></div>
-                    <div class="mt-4 pt-4 border-t border-white/10 logs-container hidden">
-                        <button
-                            class="flex items-center gap-2 text-xs text-gray-400 hover:text-white transition toggle-logs-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
-                                stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                            </svg>
-                            ดูเบื้องหลังการคิดของ AI
-                        </button>
-                        <pre
-                            class="mt-2 text-xs text-green-400 bg-gray-900 p-3 rounded-md overflow-x-auto font-mono hidden log-content"></pre>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </template>
-
-    <!-- Loading Indicator Template -->
-    <template id="tmpl-loading">
-        <div class="w-full message-bot text-gray-100 border-b border-black/10" id="loading-indicator">
-            <div class="max-w-3xl mx-auto flex gap-4 p-4 md:py-6 md:px-4 text-base">
-                <div class="w-8 h-8 rounded-sm bg-orange-500 flex-shrink-0 flex items-center justify-center">
-                    <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none"
-                        viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
-                        </circle>
-                        <path class="opacity-75" fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
-                        </path>
-                    </svg>
-                </div>
-                <div class="flex-1 text-gray-400 flex items-center">
-                    กำลังคิดเมนูให้...
-                </div>
-            </div>
-        </div>
-    </template>
+            <button type="submit" id="send-btn" class="send-btn group">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+            </button>
+        </form>
+    </div>
 
     <script>
-        let currentSessionId = null;
+        const chatForm = document.getElementById('chat-form');
+        const messageInput = document.getElementById('message-input');
         const chatContainer = document.getElementById('chat-container');
-        const form = document.getElementById('chat-form');
-        const input = document.getElementById('message-input');
         const sendBtn = document.getElementById('send-btn');
-        const emptyState = document.getElementById('empty-state');
+        const logDrawer = document.getElementById('log-drawer');
+        const toggleLogBtn = document.getElementById('toggle-log-btn');
+        const closeLogBtn = document.getElementById('close-log-btn');
+        const logContent = document.getElementById('log-content');
 
-        // Auto-resize textarea
-        input.addEventListener('input', function () {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-            if (this.value.trim().length > 0) {
-                sendBtn.classList.add('text-white', 'bg-orange-500');
-                sendBtn.classList.remove('text-gray-400');
-            } else {
-                sendBtn.classList.remove('text-white', 'bg-orange-500');
-                sendBtn.classList.add('text-gray-400');
-            }
-        });
+        let sessionId = localStorage.getItem('foodie_session_id');
+        if (!sessionId) {
+            sessionId = "session_" + Math.random().toString(36).substring(2, 9);
+            localStorage.setItem('foodie_session_id', sessionId);
+        }
+        let isWaiting = false;
 
-        // Submit on Enter (Shift+Enter for newline)
-        input.addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                if (input.value.trim()) {
-                    form.dispatchEvent(new Event('submit'));
-                }
+        // Toggle Logs
+        toggleLogBtn.addEventListener('click', () => logDrawer.classList.toggle('open'));
+        closeLogBtn.addEventListener('click', () => logDrawer.classList.remove('open'));
+
+        function appendUserMessage(text) {
+            const div = document.createElement('div');
+            div.className = 'message user';
+            div.innerHTML = `
+                <div class="avatar">👤</div>
+                <div class="message-bubble">${text}</div>
+            `;
+            chatContainer.appendChild(div);
+            scrollToBottom();
+        }
+
+        function appendBotMessage(htmlContent) {
+            const div = document.createElement('div');
+            div.className = 'message bot';
+            div.innerHTML = `
+                <div class="avatar">🤖</div>
+                <div class="message-bubble content prose-custom">${htmlContent}</div>
+            `;
+            chatContainer.appendChild(div);
+            scrollToBottom();
+            return div;
+        }
+
+        function appendLogEntry(logs) {
+            if (!logs || logs.length === 0) return;
+            
+            if (logContent.innerHTML.includes('System Ready')) {
+                logContent.innerHTML = '';
             }
-        });
+
+            const entry = document.createElement('div');
+            entry.className = 'mb-4 pb-4 border-b border-slate-800 border-dashed';
+            entry.innerHTML = logs.map(l => {
+                let color = 'text-slate-300';
+                if (l.includes('Thought')) color = 'text-blue-400';
+                if (l.includes('Action')) color = 'text-amber-400';
+                if (l.includes('Observation')) color = 'text-emerald-400';
+                if (l.includes('Guard')) color = 'text-purple-400';
+                return `<div class="${color} mb-1">${l}</div>`;
+            }).join('');
+            
+            logContent.appendChild(entry);
+            logContent.scrollTop = logContent.scrollHeight;
+        }
 
         function scrollToBottom() {
             chatContainer.scrollTo({
@@ -271,136 +385,133 @@
             });
         }
 
-        function addUserMessage(text) {
-            const tmpl = document.getElementById('tmpl-user');
-            const clone = tmpl.content.cloneNode(true);
-            clone.querySelector('.message-content').textContent = text;
-            chatContainer.appendChild(clone);
-            if (emptyState) emptyState.style.display = 'none';
-            scrollToBottom();
-        }
+        messageInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                chatForm.dispatchEvent(new Event('submit'));
+            }
+        });
 
-        function showLoading() {
-            const tmpl = document.getElementById('tmpl-loading');
-            chatContainer.appendChild(tmpl.content.cloneNode(true));
-            scrollToBottom();
-        }
-
-        function addBotMessageLive() {
-            const tmpl = document.getElementById('tmpl-bot');
-            const clone = tmpl.content.cloneNode(true);
-            const container = document.createElement('div');
-            container.appendChild(clone);
-            const contentNode = container.querySelector('.message-content');
-
-            const logsContainer = container.querySelector('.logs-container');
-            const logContent = container.querySelector('.log-content');
-            const toggleBtn = container.querySelector('.toggle-logs-btn');
-
-            // Show logs by default while streaming
-            logsContainer.classList.remove('hidden');
-            logContent.classList.remove('hidden');
-            toggleBtn.addEventListener('click', function () {
-                logContent.classList.toggle('hidden');
-            });
-
-            chatContainer.appendChild(container.firstElementChild);
-            scrollToBottom();
-
-            return {
-                setContent: (html) => { contentNode.innerHTML = html; scrollToBottom(); },
-                appendLog: (text) => { logContent.textContent += text; scrollToBottom(); },
-                getLogContent: () => logContent.textContent,
-                collapseLog: () => { logContent.classList.add('hidden'); }
-            };
-        }
-
-        form.addEventListener('submit', async function (e) {
+        chatForm.addEventListener('submit', async function(e) {
             e.preventDefault();
+            
+            const message = messageInput.value.trim();
+            if (!message || isWaiting) return;
 
-            const message = input.value.trim();
-            if (!message) return;
+            // UI updates for sending
+            messageInput.value = '';
+            messageInput.style.height = 'auto';
+            appendUserMessage(message);
+            
+            isWaiting = true;
+            sendBtn.disabled = true;
 
-            // Reset input
-            input.value = '';
-            input.style.height = 'auto';
-            sendBtn.classList.remove('text-white', 'bg-orange-500');
-            sendBtn.classList.add('text-gray-400');
-            input.disabled = true;
-
-            // Add user message to UI
-            addUserMessage(message);
-
-            // Prepare live bot message
-            const botUI = addBotMessageLive();
-            botUI.setContent("<span class='animate-pulse text-gray-400'>กำลังคิดเมนูให้...</span>");
+            // Show typing indicator
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message bot';
+            typingDiv.innerHTML = `
+                <div class="avatar">🤖</div>
+                <div class="message-bubble content">
+                    <div class="typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            `;
+            chatContainer.appendChild(typingDiv);
+            scrollToBottom();
 
             try {
+                // Using the streaming endpoint
                 const response = await fetch('/api/chat_stream', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: message,
-                        session_id: currentSessionId
-                    })
+                    body: JSON.stringify({ message: message, session_id: sessionId })
                 });
 
+                if (!response.ok) throw new Error("Network response was not ok");
+
                 const reader = response.body.getReader();
-                const decoder = new TextDecoder('utf-8');
-                let buffer = '';
+                const decoder = new TextDecoder("utf-8");
+                let contentDiv = null;
+                
+                let fullText = "";
+                let accumulatedLogs = [];
 
                 while (true) {
                     const { done, value } = await reader.read();
-                    if (done) break;
+                    if (done) {
+                        if (!contentDiv) {
+                            chatContainer.removeChild(typingDiv);
+                            appendBotMessage('<p class="text-red-500 font-medium">ไม่ได้รับการตอบกลับจากเซิร์ฟเวอร์</p>');
+                        }
+                        break;
+                    }
 
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop(); // Keep incomplete line in buffer
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
 
                     for (const line of lines) {
                         if (line.startsWith('data: ')) {
                             try {
                                 const data = JSON.parse(line.substring(6));
-                                if (data.type === 'log') {
-                                    botUI.appendLog(data.content);
-                                } else if (data.type === 'answer') {
-                                    botUI.setContent(marked.parse(data.content));
-                                    currentSessionId = data.session_id;
-                                    // Collapse log automatically when finished, if desired
-                                    botUI.collapseLog();
-                                } else if (data.type === 'error') {
-                                    botUI.setContent("<span class='text-red-400'>เกิดข้อผิดพลาด: " + data.content + "</span>");
+                                
+                                if (!contentDiv && (data.type === 'chunk' || data.type === 'answer' || data.type === 'error')) {
+                                    chatContainer.removeChild(typingDiv);
+                                    let botMessageDiv = appendBotMessage("");
+                                    contentDiv = botMessageDiv.querySelector('.content');
                                 }
-                            } catch (err) {
-                                console.error('Parse error:', err, line);
+                                
+                                if (data.type === 'chunk') {
+                                    fullText += data.content;
+                                    contentDiv.innerHTML = marked.parse(fullText);
+                                    scrollToBottom();
+                                } else if (data.type === 'answer') {
+                                    contentDiv.innerHTML = marked.parse(data.content);
+                                    scrollToBottom();
+                                } else if (data.type === 'error') {
+                                    contentDiv.innerHTML = `<p class="text-red-500 font-medium">เกิดข้อผิดพลาด: ${data.content}</p>`;
+                                    scrollToBottom();
+                                } else if (data.type === 'log') {
+                                    accumulatedLogs.push(data.content);
+                                }
+                            } catch (e) {
+                                console.error("Error parsing JSON chunk:", e, line);
                             }
                         }
                     }
                 }
 
-                if (botUI.getLogContent().trim() === '') {
-                    botUI.setContent(botUI.getLogContent());
-
+                // After stream ends, display accumulated logs
+                if (accumulatedLogs.length > 0) {
+                    appendLogEntry(accumulatedLogs);
                 }
 
             } catch (error) {
-                console.error("Error calling API:", error);
-                botUI.setContent("<span class='text-red-400'>ขออภัย เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาลองใหม่อีกครั้ง</span>");
+                console.error('Error:', error);
+                if (chatContainer.contains(typingDiv)) {
+                    chatContainer.removeChild(typingDiv);
+                }
+                appendBotMessage('<p class="text-red-500 font-medium">ขออภัยค่ะ เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์ กรุณาลองใหม่อีกครั้ง</p>');
             } finally {
-                input.disabled = false;
-                input.focus();
+                isWaiting = false;
+                sendBtn.disabled = false;
+                messageInput.focus();
             }
         });
 
-        document.getElementById('new-chat-btn').addEventListener('click', () => {
-            currentSessionId = null;
-            chatContainer.innerHTML = '';
-            if (emptyState) {
-                emptyState.style.display = 'flex';
-                chatContainer.appendChild(emptyState);
+        // Auto-resize textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            let newHeight = this.scrollHeight;
+            if (newHeight > 150) newHeight = 150;
+            this.style.height = newHeight + 'px';
+            
+            if (this.scrollHeight > 150) {
+                this.style.overflowY = 'auto';
+            } else {
+                this.style.overflowY = 'hidden';
             }
         });
     </script>
 </body>
-
 </html>

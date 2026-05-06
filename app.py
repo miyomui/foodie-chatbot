@@ -66,7 +66,11 @@ async def api_chat_stream(request: Request):
         old_stdout = sys.stdout
         sys.stdout = QueueWriter(old_stdout)
         try:
-            ans = foodie_agent(message, session_id=session_id)
+            from src.agent import foodie_agent_stream
+            ans = ""
+            for chunk in foodie_agent_stream(message, session_id=session_id):
+                ans += chunk
+                q.put({"type": "chunk", "content": chunk})
             q.put({"type": "answer", "content": ans, "session_id": session_id})
         except Exception as e:
             error_trace = traceback.format_exc()

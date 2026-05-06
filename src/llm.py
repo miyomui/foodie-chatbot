@@ -9,7 +9,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
-DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-pro")
+DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
 
 _client = None
 _chat_model = None
@@ -65,3 +65,26 @@ def generate_text(prompt: str, *, response_format=None) -> str:
     if not content:
         raise RuntimeError("DeepSeek ไม่ได้ส่งข้อความตอบกลับ")
     return content.strip()
+
+def generate_text_stream(prompt: str, *, response_format=None):
+    global _llm_available
+    if not _llm_available:
+        raise RuntimeError("DeepSeek ถูกปิดใช้ชั่วคราวใน session นี้หลังเรียกไม่สำเร็จ")
+
+    request = {
+        "model": DEEPSEEK_MODEL,
+        "messages": [{"role": "user", "content": prompt}],
+        "stream": True,
+    }
+    if response_format:
+        request["response_format"] = response_format
+
+    try:
+        resp = _get_client().chat.completions.create(**request)
+        for chunk in resp:
+            content = chunk.choices[0].delta.content
+            if content:
+                yield content
+    except Exception:
+        _llm_available = False
+        raise
