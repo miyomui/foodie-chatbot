@@ -14,6 +14,7 @@ warnings.filterwarnings("ignore", message=".*allowed_objects.*")
 warnings.filterwarnings("ignore", message=".*ConversationBufferMemory.*")
 warnings.simplefilter("ignore")
 
+# pyrefly: ignore [missing-import]
 from langchain_classic.memory import ConversationBufferMemory
 from langchain_core.prompts import PromptTemplate
 from langchain_core.tools import tool
