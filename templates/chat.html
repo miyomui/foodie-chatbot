@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="th">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -70,7 +71,10 @@
         }
 
         @keyframes fade-in-up {
-            to { opacity: 1; transform: translateY(0); }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .message.user {
@@ -87,7 +91,7 @@
             justify-content: center;
             flex-shrink: 0;
             font-size: 1.25rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         .message.user .avatar {
@@ -106,7 +110,7 @@
             padding: 1rem 1.25rem;
             font-size: 1.05rem;
             line-height: 1.6;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
             position: relative;
         }
 
@@ -127,7 +131,7 @@
             background: white;
             border-top: 1px solid #e2e8f0;
             padding: 1rem 2rem;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.02);
+            box-shadow: 0 -4px 15px rgba(0, 0, 0, 0.02);
             z-index: 10;
         }
 
@@ -193,21 +197,53 @@
             animation: bounce 1.4s infinite ease-in-out both;
         }
 
-        .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
-        .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+        .typing-indicator span:nth-child(1) {
+            animation-delay: -0.32s;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: -0.16s;
+        }
 
         @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); background-color: #f97316; }
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0);
+            }
+
+            40% {
+                transform: scale(1);
+                background-color: #f97316;
+            }
         }
 
         /* Markdown Styling within Chat */
-        .prose-custom p { margin-bottom: 0.5em; }
-        .prose-custom p:last-child { margin-bottom: 0; }
-        .prose-custom strong { color: #ea580c; font-weight: 600; }
-        .prose-custom ul { list-style-type: disc; padding-left: 1.5em; margin-top: 0.5em; margin-bottom: 0.5em; }
-        .prose-custom li { margin-bottom: 0.25em; }
-        
+        .prose-custom p {
+            margin-bottom: 0.5em;
+        }
+
+        .prose-custom p:last-child {
+            margin-bottom: 0;
+        }
+
+        .prose-custom strong {
+            color: #ea580c;
+            font-weight: 600;
+        }
+
+        .prose-custom ul {
+            list-style-type: disc;
+            padding-left: 1.5em;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+
+        .prose-custom li {
+            margin-bottom: 0.25em;
+        }
+
         /* Drawer */
         .log-drawer {
             position: absolute;
@@ -222,35 +258,42 @@
             display: flex;
             flex-direction: column;
             border-left: 1px solid #334155;
-            box-shadow: -10px 0 30px rgba(0,0,0,0.2);
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.2);
         }
 
         .log-drawer.open {
             right: 0;
         }
-
     </style>
 </head>
+
 <body>
 
     <header class="chat-header">
         <div class="flex items-center gap-3">
-            <a href="/" class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-primary-600 hover:bg-primary-50 transition-colors">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <a href="/"
+                class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:text-primary-600 hover:bg-primary-50 transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
             </a>
             <div>
                 <h1 class="text-xl font-bold text-slate-800 flex items-center gap-2">
-                    น้องหิวข้าว <span class="text-sm px-2 py-0.5 bg-primary-100 text-primary-600 rounded-full">AI Assistant</span>
+                    น้องหิวข้าว <span class="text-sm px-2 py-0.5 bg-primary-100 text-primary-600 rounded-full">AI
+                        Assistant</span>
                 </h1>
                 <p class="text-xs text-slate-500">พร้อมช่วยคุณเลือกเมนูอาหาร 24 ชม.</p>
             </div>
         </div>
-        
-        <button id="toggle-log-btn" class="text-sm font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+
+        <button id="toggle-log-btn"
+            class="text-sm font-semibold text-primary-600 bg-primary-50 hover:bg-primary-100 px-4 py-2 rounded-lg transition-colors flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
             </svg>
             เบื้องหลัง AI
         </button>
@@ -258,14 +301,15 @@
 
     <!-- Main Chat Area -->
     <div class="flex-1 flex relative overflow-hidden">
-        
+
         <!-- Chat History -->
         <div id="chat-container" class="chat-container">
             <div class="message bot">
                 <div class="avatar">🤖</div>
                 <div class="message-bubble content prose-custom">
                     <p>สวัสดีค่ะ <strong>น้องหิวข้าว</strong> ยินดีให้บริการค่ะ 🍽️</p>
-                    <p>วันนี้อยากทานอะไรเป็นพิเศษไหมคะ? บอกวัตถุดิบ รสชาติ หรือข้อจำกัดอย่าง "ไม่ทานเผ็ด" หรือ "ไม่ใส่ผัก" มาได้เลยค่ะ</p>
+                    <p>วันนี้อยากทานอะไรเป็นพิเศษไหมคะ? บอกวัตถุดิบ รสชาติ หรือข้อจำกัดอย่าง "ไม่ทานเผ็ด" หรือ
+                        "ไม่ใส่ผัก" มาได้เลยค่ะ</p>
                 </div>
             </div>
         </div>
@@ -274,14 +318,19 @@
         <div id="log-drawer" class="log-drawer">
             <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900">
                 <h3 class="font-bold text-emerald-400 flex items-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
                     </svg>
                     Agent Runtime Logs
                 </h3>
-                <button id="close-log-btn" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <button id="close-log-btn"
+                    class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
                     </svg>
                 </button>
             </div>
@@ -296,17 +345,16 @@
     <div class="input-area">
         <form id="chat-form" class="max-w-4xl mx-auto flex gap-3 items-end">
             <div class="flex-1 relative">
-                <textarea 
-                    id="message-input" 
-                    rows="1" 
-                    placeholder="พิมพ์ข้อความ... (เช่น แนะนำเมนูไก่ที่ไม่เผ็ดให้หน่อย)" 
-                    class="chat-input"
-                    autofocus
-                ></textarea>
+                <textarea id="message-input" rows="1"
+                    placeholder="พิมพ์ข้อความ... (เช่น แนะนำเมนูไก่ที่ไม่เผ็ดให้หน่อย)" class="chat-input"
+                    autofocus></textarea>
             </div>
             <button type="submit" id="send-btn" class="send-btn group">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 transform transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                <svg xmlns="http://www.w3.org/2000/svg"
+                    class="h-6 w-6 transform transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                 </svg>
             </button>
         </form>
@@ -358,7 +406,7 @@
 
         function appendLogEntry(logs) {
             if (!logs || logs.length === 0) return;
-            
+
             if (logContent.innerHTML.includes('System Ready')) {
                 logContent.innerHTML = '';
             }
@@ -373,7 +421,7 @@
                 if (l.includes('Guard')) color = 'text-purple-400';
                 return `<div class="${color} mb-1">${l}</div>`;
             }).join('');
-            
+
             logContent.appendChild(entry);
             logContent.scrollTop = logContent.scrollHeight;
         }
@@ -385,16 +433,16 @@
             });
         }
 
-        messageInput.addEventListener('keydown', function(e) {
+        messageInput.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 chatForm.dispatchEvent(new Event('submit'));
             }
         });
 
-        chatForm.addEventListener('submit', async function(e) {
+        chatForm.addEventListener('submit', async function (e) {
             e.preventDefault();
-            
+
             const message = messageInput.value.trim();
             if (!message || isWaiting) return;
 
@@ -402,7 +450,7 @@
             messageInput.value = '';
             messageInput.style.height = 'auto';
             appendUserMessage(message);
-            
+
             isWaiting = true;
             sendBtn.disabled = true;
 
@@ -433,7 +481,7 @@
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder("utf-8");
                 let contentDiv = null;
-                
+
                 let fullText = "";
                 let accumulatedLogs = [];
 
@@ -454,13 +502,13 @@
                         if (line.startsWith('data: ')) {
                             try {
                                 const data = JSON.parse(line.substring(6));
-                                
+
                                 if (!contentDiv && (data.type === 'chunk' || data.type === 'answer' || data.type === 'error')) {
                                     chatContainer.removeChild(typingDiv);
                                     let botMessageDiv = appendBotMessage("");
                                     contentDiv = botMessageDiv.querySelector('.content');
                                 }
-                                
+
                                 if (data.type === 'chunk') {
                                     fullText += data.content;
                                     contentDiv.innerHTML = marked.parse(fullText);
@@ -500,12 +548,12 @@
         });
 
         // Auto-resize textarea
-        messageInput.addEventListener('input', function() {
+        messageInput.addEventListener('input', function () {
             this.style.height = 'auto';
             let newHeight = this.scrollHeight;
             if (newHeight > 150) newHeight = 150;
             this.style.height = newHeight + 'px';
-            
+
             if (this.scrollHeight > 150) {
                 this.style.overflowY = 'auto';
             } else {
@@ -514,4 +562,5 @@
         });
     </script>
 </body>
+
 </html>
